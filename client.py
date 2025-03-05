@@ -13,11 +13,11 @@ while True:
 
     if role.lower() == "l":
         file = input("Enter the file you want: ")
-        protocol.sendMessage(file, tracker_ip, tracker_port)
+        protocol.leech(file, tracker_ip, tracker_port)
         break
     elif role.lower() == "s":
         file = input("Enter the file you want to seed: ")
-        protocol.sendMessage(file, tracker_ip, tracker_port)
+        protocol.seed(file, tracker_ip, tracker_port)
         break
     
     print("Role not available") 

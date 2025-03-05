@@ -18,7 +18,7 @@ while True:
     data, addr = tracker.recvfrom(260)
     type, content = protocol.receive(data)
 
-    if type == 0:
+    if type == 2:
         print("Leecher requesting file")
         file = content
         seeders = []
@@ -45,6 +45,7 @@ while True:
 
     if type == 3:
         print("Seeder online")
+        protocol.sendMessage("Seeder online", addr[0], addr[1])
         file = content
         for s in files[file]:
             if s.ip == addr[0]:

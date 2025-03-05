@@ -16,7 +16,7 @@ class Protocol:
         self.post(ip, port)
     
     def leech(self, file, ip, port):
-        self.data[0] = 3
+        self.data[0] = 2
         self.data[1:5] = len(file).to_bytes(4, 'little')
         self.data[5:] = file.encode()
         self.post(ip, port)
