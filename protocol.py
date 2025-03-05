@@ -9,6 +9,18 @@ class Protocol:
         self.socket.sendto(self.data, (ip, port))
         self.data = bytearray(260)
     
+    def seed(self, file, ip, port):
+        self.data[0] = 3
+        self.data[1:5] = len(file).to_bytes(4, 'little')
+        self.data[5:] = file.encode()
+        self.post(ip, port)
+    
+    def leech(self, file, ip, port):
+        self.data[0] = 3
+        self.data[1:5] = len(file).to_bytes(4, 'little')
+        self.data[5:] = file.encode()
+        self.post(ip, port)
+    
     def sendMessage(self, message, ip, port):
         self.data[0] = 0
         self.data[1:5] = len(message).to_bytes(4, 'little')
