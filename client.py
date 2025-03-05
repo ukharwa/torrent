@@ -1,32 +1,23 @@
 import socket
+from protocol import Protocol
 
-udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-ip = "192.168.237.90"
-port = 6969
+tracker_ip = "192.168.237.90"
+tracker_port = 6969
 
-header = bytearray(261)
-# Information sent to tracker
-# header[0] = message_type: Leecher (1) or Seeder (0)
-# header[2:6] = content length
-# rest of header is file name
+protocol = Protocol(client)
 
 while True:
     role = input("L/S: ")
 
     if role.lower() == "l":
         file = input("Enter the file you want: ")
-        header[0] = 1
-        header[1] = 1
-        header[2:6] = len(file).to_bytes(4, 'little')
-        header[6:] = file.encode()
+        protocol.sendMessage(file, tracker_ip, tracker_port)
         break
     elif role.lower() == "s":
         file = input("Enter the file you want to seed: ")
-        header[0] = 1
-        header[1] = 1
-        header[2:6] = len(file).to_bytes(4, 'little')
-        header[6:] = file.encode()
+        protocol.sendMessage(file, tracker_ip, tracker_port)
         break
     
-    print("Role not available")
+    print("Role not available")                                                                                                                                                                                                                                                                                                                                                                                         
