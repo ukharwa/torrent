@@ -7,17 +7,20 @@ class Protocol:
 
     def post(self, ip, port):
         self.socket.sendto(self.data, (ip, port))
+        self.data = bytearray(260)
     
-    def sendMessage(self, message):
+    def sendMessage(self, message, ip, port):
         self.data[0] = 0
         self.data[1:5] = len(message).to_bytes(4, 'little')
         self.data[5:] = message.encode()
+        self.post(ip, port)
 
-    def sendSeeder(self, ip, port):
+    def sendIP(self, Mip, Mport, ip, port):
         self.data[0] = 1
-        self.data[1:5] = len(ip).to_bytes(4, "little")
-        self.data[5:9] = port.to_bytes(4, "little")
-        self.data[9:] = ip.encode()
+        self.data[1:5] = len(Mip).to_bytes(4, "little")
+        self.data[5:9] = Mport.to_bytes(4, "little")
+        self.data[9:] = Mip.encode()
+        self.post(ip, port)
 
     def receive(self, data):
         type = data[0]
