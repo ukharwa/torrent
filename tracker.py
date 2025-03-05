@@ -3,8 +3,7 @@ from seeder import Seeder
 from protocol import Protocol
 
 tracker = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-tracker.bind(('192.168.237.90 ', 6969))
-port = "6969"
+tracker.bind(('192.168.237.254', 6969))
 
 files = {
     "file1.txt" : [Seeder("192.168.237.121", 9999, 0)],
@@ -19,7 +18,7 @@ while True:
     data, addr = tracker.recvfrom(260)
     type, content = protocol.receive(data)
 
-    if type == 2:
+    if type == 0:
         print("Leecher requesting file")
         file = content
         seeders = []
