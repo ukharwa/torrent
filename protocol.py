@@ -1,11 +1,12 @@
 import socket
 
 class Protocol:
-    def __init__(self):
+    def __init__(self, socket=None):
         self.data = bytearray(260)
+        self.socket = socket
 
-    def post(self, socket, ip, port):
-        socket.sendto(self.data, (ip, port))
+    def post(self, ip, port):
+        self.socket.sendto(self.data, (ip, port))
     
     def sendMessage(self, message):
         self.data[0] = 0
@@ -23,11 +24,15 @@ class Protocol:
         length = int.from_bytes(data[1:5], 'little')
 
         if type == 0:
-            message = data[9:9+length].decode()
+            message = data[5:9+length].decode()
             print(message)
-            return
+            return type, message
         
         if type == 1:
             port = int.from_bytes(data[5:9], "little")
             ip = data[9:9+length].decode()
-            return ip, port
+            return type, (ip, port)
+        
+        if type == 2:
+            file = data[5:9+length].decode()
+            return type, file
