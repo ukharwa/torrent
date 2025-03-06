@@ -26,7 +26,11 @@ class Request:
         data[52:60] = uploaded.to_bytes(8, 'little')
         data[60:68] = left.to_bytes(8, 'little')
         data[68:72] = event.to_bytes(4, 'little')
-        data[72:76] = ip.encode()
+        ip_list = ip.split(".")
+        data[72] = ip_list[0].to_bytes(1, "little")
+        data[73] = ip_list[1].to_bytes(1, "little")
+        data[74] = ip_list[2].to_bytes(1, "little")
+        data[75] = ip_list[3].to_bytes(1, "little")
         data[76:] = port.to_bytes(2, 'little')
         return data
 
@@ -53,13 +57,13 @@ class Request:
 
         if action == 1:
             response = {}
-            response["torrent"] = request[4:24].decode
+            response["torrent"] = request[4:24].decode()
             response["peerID"] = request[24:44].decode()
             response["downloaded"] = int.from_bytes(request[44:52], 'little')
             response["uploaded"] = int.from_bytes(request[52:60])
             response["left"] = int.from_bytes(request[60:68], "little")
             response["event"] = int.from_bytes(request[68:72], "little")
-            response["ip"] = request[72:76].decode()
+            response["ip"] = request[72]
             response["port"] = int.from_bytes(request[76:], "little")
 
             return response
