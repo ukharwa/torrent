@@ -39,7 +39,7 @@ class Request:
         data[16:] = seeders.to_bytes(4, 'little')
         return data
     
-    def decode(self, request):
+    def client_decode(self, request):
         action = int.from_bytes(request[0:4], 'little')
 
         if action == 1:
@@ -47,3 +47,19 @@ class Request:
             leechers = int.from_bytes(request[12:16], 'little')
             seeders = int.from_bytes(request[16:], 'little')
             return interval, leechers, seeders
+
+    def tracker_decode(self, request):
+        action = int.from_bytes(request[0:4], 'little')
+
+        if action == 1:
+            response = {}
+            response["torrent"] = request[4:24].decode
+            response["peerID"] = request[24:44].decode()
+            response["downloaded"] = int.from_bytes(request[44:52], 'little')
+            response["uploaded"] = int.from_bytes(request[52:60])
+            response["left"] = int.from_bytes(request[60:68], "little")
+            response["event"] = int.from_bytes(request[68:72], "little")
+            response["ip"] = request[72:76].decode()
+            response["port"] = int.from_bytes(request[76:], "little")
+
+            return response

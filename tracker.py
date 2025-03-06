@@ -23,6 +23,9 @@ while True:
         print("Tracker Connected")
 
     if action == 1:
+        response = protocol.tracker_decode(data)
+        for key, value in  response.items():
+            print(key + value)
         tracker.sendto(protocol.announce_response(1800, 20, 100), addr)
 
     # if type == 2:
