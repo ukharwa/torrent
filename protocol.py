@@ -27,10 +27,10 @@ class Request:
         data[60:68] = left.to_bytes(8, 'little')
         data[68:72] = event.to_bytes(4, 'little')
         ip_list = ip.split(".")
-        data[72] = int(ip_list[0]).to_bytes(1, "little")
-        data[73] = int(ip_list[1]).to_bytes(1, "little")
-        data[74] = int(ip_list[2]).to_bytes(1, "little")
-        data[75] = int(ip_list[3]).to_bytes(1, "little")
+        data[72] = (int(ip_list[0])).to_bytes(1, "little")
+        data[73] = (int(ip_list[1])).to_bytes(1, "little")
+        data[74] = (int(ip_list[2])).to_bytes(1, "little")
+        data[75] = (int(ip_list[3])).to_bytes(1, "little")
         data[76:] = port.to_bytes(2, 'little')
         return data
 
