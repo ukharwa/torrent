@@ -3,7 +3,7 @@ from seeder import Seeder
 from protocol import Request
 
 tracker = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-tracker.bind(('192.168.237.254', 6969))
+tracker.bind(('196.42.75.61', 6969))
 
 protocol = Request()
 
@@ -20,6 +20,10 @@ while True:
 
     if action == 0:
         tracker.sendto(protocol.connection_response(), addr)
+        print("Tracker Connected")
+
+    if action == 1:
+        tracker.sendto(protocol.announce_response(1800, 20, 100), addr)
 
     # if type == 2:
     #     print("Leecher requesting file")

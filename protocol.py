@@ -30,10 +30,20 @@ class Request:
         data[76:] = port.to_bytes(2, 'little')
         return data
 
-    def announce_response(self, interval, leechers, seeders, peers):
+    def announce_response(self, interval, leechers, seeders):
         data = bytearray(20)
         action = 1
         data[0:4] = action.to_bytes(4, 'little')
         data[4:12] = interval.to_bytes(8, 'little')
         data[12:16] = leechers.to_bytes(4, 'little')
-        data[12:16] = seeders.to_bytes(4, 'little')
+        data[16:] = seeders.to_bytes(4, 'little')
+        return data
+    
+    def decode(self, request):
+        action = int.from_bytes(request[0:4], 'little')
+
+        if action == 1:
+            interval = int.from_bytes(request[4:12], 'little')
+            leechers = int.from_bytes(request[12:16], 'little')
+            seeders = int.from_bytes(request[16:], 'little')
+            return interval, leechers, seeders
