@@ -63,7 +63,8 @@ class Request:
             response["uploaded"] = int.from_bytes(request[52:60])
             response["left"] = int.from_bytes(request[60:68], "little")
             response["event"] = int.from_bytes(request[68:72], "little")
-            response["ip"] = request[72]
+            ip = [str(request[72]), str(request[73]), str(request[74]), str(request[75])]
+            response["ip"] = ".".join(ip)
             response["port"] = int.from_bytes(request[76:], "little")
 
             return response
