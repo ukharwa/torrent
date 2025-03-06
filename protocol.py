@@ -26,7 +26,7 @@ class Request:
         data[52:60] = uploaded.to_bytes(8, 'little')
         data[60:68] = left.to_bytes(8, 'little')
         data[68:72] = event.to_bytes(4, 'little')
-        data[72:76] = ip.to_bytes(4, 'little')
+        data[72:76] = ip.encode()
         data[76:] = port.to_bytes(2, 'little')
         return data
 
