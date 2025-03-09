@@ -18,20 +18,20 @@ while True:
         print("Tracker found")
         response = protocol.client_decode(data)
         connectionID = response["connectionID"]
-        print(decode_connectionID(connectionID))
 
         print("Attempting connection...")
         announce = protocol.announce_request(connectionID, "file000000000001.txt", "ukharwa0000000000000", 0, 0, 768000, 1, "192.168.237.129", 9000)
         client.sendto(announce, (tracker_ip, tracker_port))
 
-        data, _ = client.recvfrom(12)
-        response = protocol.client_decode(response)
+        data, _ = client.recvfrom(1024)
+        response = protocol.client_decode(data)
         action = int.from_bytes(data[0:4], 'little')       
+        
+        if action == 99:
+            print("ERROR: " + response["ERROR"])
 
         if action == 1:
             print("Successfully connected to tracker...")
         break
 
-
-for key, value in response:
-        print(key + ": " + str(value))
+print(response)

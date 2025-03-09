@@ -15,7 +15,7 @@ class Request:
         data = bytearray(12)
         action = 0
         data[0:4] = action.to_bytes(4, 'little')
-        data[4:] = connectionID
+        data[4:12] = connectionID
         return data
     
     def announce_request(self, connectionID, torrent, peerID, downloaded, uploaded, left, event, ip, port):
@@ -30,7 +30,7 @@ class Request:
         data[68:76] = left.to_bytes(8, 'little')
         data[76:80] = event.to_bytes(4, 'little')
         data[80:84] = ip_to_bytes(ip)
-        data[84:] = port.to_bytes(2, 'little')
+        data[84:86] = port.to_bytes(2, 'little')
         return data
 
     def announce_response(self, interval, leechers, seeders):
@@ -39,7 +39,15 @@ class Request:
         data[0:4] = action.to_bytes(4, 'little')
         data[4:12] = interval.to_bytes(8, 'little')
         data[12:16] = leechers.to_bytes(4, 'little')
-        data[16:] = seeders.to_bytes(4, 'little')
+        data[16:20] = seeders.to_bytes(4, 'little')
+        return data
+    
+    def send_error(self, message):
+        data = bytearray(259)
+        action = 99
+        data[0:4] = action.to_bytes(4, 'little')
+        data[4:8] = len(message).to_bytes(4, 'little')
+        data[8:] = message.encode()
         return data
     
     def client_decode(self, request):
@@ -53,8 +61,11 @@ class Request:
         if action == 1:
             response["interval"] = int.from_bytes(request[4:12], 'little')
             response["leechers"] = int.from_bytes(request[12:16], 'little')
-            response["seeders"] = int.from_bytes(request[16:], 'little')
+            response["seeders"] = int.from_bytes(request[16:20], 'little')
             return response
+
+        if action == 99:
+            response["ERROR"] = (request[8:8+int.from_bytes(request[4:8], "little")]).decode()       
 
         return response
 
@@ -71,7 +82,7 @@ class Request:
             response["left"] = int.from_bytes(request[68:76], "little")
             response["event"] = int.from_bytes(request[76:80], "little")
             response["ip"] = ip_from_bytes(request[80:84])
-            response["port"] = int.from_bytes(request[84:], "little")
+            response["port"] = int.from_bytes(request[84:86], "little")
             return response
 
         return response
@@ -99,7 +110,7 @@ def get_connectionID(ip):
 def decode_connectionID(conID):
     ip = ip_from_bytes(conID[0:4])
     time = int.from_bytes(conID[4:])
-    return ip, time
+    return ip  + str(time)
 
 def peer_from_announce(response):
     return Peer(response["ip"], response["port"], response["downloaded"], response["uploaded"], response["left"], response["event"], (time.time()).__trunc__())
