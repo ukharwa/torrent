@@ -1,9 +1,10 @@
 import socket
+import hashlib
 from protocol import Request, decode_connectionID
 
 client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-tracker_ip = "localhost"
+tracker_ip = "196.42.75.186"
 tracker_port = 6969
 
 protocol = Request()
@@ -20,7 +21,7 @@ while True:
         connectionID = response["connectionID"]
 
         print("Attempting connection...")
-        announce = protocol.announce_request(connectionID, "file000000000001.txt", "ukharwa0000000000000", 0, 0, 768000, 1, "192.168.237.129", 9000)
+        announce = protocol.announce_request(connectionID, hashlib.sha256(b"file").hexdigest(), "ukharwa0000000000000", 0, 0, 768000, 1, "192.168.237.129", 9000)
         client.sendto(announce, (tracker_ip, tracker_port))
 
         data, _ = client.recvfrom(1024)
