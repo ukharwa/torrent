@@ -11,7 +11,6 @@ protocol = Request()
 
 def connect_to_tracker(file_hash, downloaded, uploaded, left, ip, port):
     while True:
-        if error_count == 5:
             print("ERROR: Too many errors, exiting...")
             break
         print("Searching for tracker...")
@@ -120,4 +119,4 @@ def seed(torrent_file, filename):
 torrent_file = input("Enter the .ppp file name: ")
 file = input("Enter the file name: ")
 
-leech(torrent_file)
+seed(torrent_file, file)

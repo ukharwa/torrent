@@ -1,0 +1,21 @@
+{
+    "file_hash": "0f472d2d7ad48f1f6299cfb5a30a9a825693c0ec201165d1b093bbc82f588a3a",
+    "file_size": 3069720,
+    "num_packets": 6,
+    "size_of_packets": [
+        524288,
+        524288,
+        524288,
+        524288,
+        524288,
+        448280
+    ],
+    "packet_list": [
+        "2f735c543df15fd8db3c3caf4372a6164807afeb6a83fc59a9a83d44476e198e",
+        "07854d2fef297a06ba81685e660c332de36d5d18d546927d30daad6d7fda1541",
+        "07854d2fef297a06ba81685e660c332de36d5d18d546927d30daad6d7fda1541",
+        "07854d2fef297a06ba81685e660c332de36d5d18d546927d30daad6d7fda1541",
+        "07854d2fef297a06ba81685e660c332de36d5d18d546927d30daad6d7fda1541",
+        "0d57709a09882056e3b86c1162d397bf276585cb52e8f0a9802735d7fca0e6ec"
+    ]
+}
