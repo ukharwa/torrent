@@ -30,20 +30,20 @@ class Request:
         data[72:80] = uploaded.to_bytes(8, 'little')        #number of bytes uploaded
         data[80:88] = left.to_bytes(8, 'little')            #number of bytes left to download
         data[88:92] = event.to_bytes(4, 'little')           #0:none 1:completed 2:stopped
-        data[92:96] = ip_to_bytes(ip)
-        data[96:98] = port.to_bytes(2, 'little')
+        data[92:96] = ip_to_bytes(ip)                       #peers ip address
+        data[96:98] = port.to_bytes(2, 'little')            #connection port
         return data
 
-    def announce_response(self, interval, leechers, seeders):
+    def announce_response(self, interval, leechers, seeders):#response to the leecher
         data = bytearray(20)
         action = 1
         data[0:4] = action.to_bytes(4, 'little')
         data[4:12] = interval.to_bytes(8, 'little')
-        data[12:16] = leechers.to_bytes(4, 'little')
-        data[16:20] = seeders.to_bytes(4, 'little')
+        data[12:16] = leechers.to_bytes(4, 'little')        #number of peers leeching
+        data[16:20] = seeders.to_bytes(4, 'little')         #number of peers seeding
         return data
     
-    def send_error(self, message):
+    def send_error(self, message):  #send error message
         data = bytearray(259)
         action = 99
         data[0:4] = action.to_bytes(4, 'little')
@@ -51,20 +51,21 @@ class Request:
         data[8:] = message.encode()
         return data
     
-    def client_decode(self, request):
+    def client_decode(self, request):   #decodes the request from the client
         response = {}
         action = int.from_bytes(request[0:4], 'little')
 
+        #connect action
         if action == 0:
            response["connectionID"] = request[4:]
            return response
-
+        #announce action
         if action == 1:
             response["interval"] = int.from_bytes(request[4:12], 'little')
             response["leechers"] = int.from_bytes(request[12:16], 'little')
             response["seeders"] = int.from_bytes(request[16:20], 'little')
-            return response
-
+            return response 
+        #error action
         if action == 99:
             response["ERROR"] = (request[8:8+int.from_bytes(request[4:8], "little")]).decode()       
 
