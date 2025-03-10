@@ -6,7 +6,7 @@ udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 tracker_ip = "196.42.75.186"
 tracker_port = 6969
-client_ip = socket.gethostbyname(socket.gethostname)
+client_ip = socket.gethostbyname(socket.gethostname())
 peerID = generate_peerid(client_ip, "Hello")
 
 protocol = Request()
@@ -20,7 +20,7 @@ with open(input("Enter torrent file:"),"r") as torrent_file:
 
 downloaded = 0
 uploaded = 0
-left = actual_file_size
+left = 0
 error_count = 0
 
 while True:
