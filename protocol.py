@@ -76,16 +76,6 @@ class Request:
 
         if action == 1:
             response["connectionID"] = request[4:12]
-<<<<<<< HEAD
-            response["file_hash'"] = request[12:32].decode()
-            response["peerID"] = request[32:52].decode()
-            response["downloaded"] = int.from_bytes(request[52:60], 'little')
-            response["uploaded"] = int.from_bytes(request[60:68])
-            response["left"] = int.from_bytes(request[68:76], "little")
-            response["event"] = int.from_bytes(request[76:80], "little")
-            response["ip"] = ip_from_bytes(request[80:84])
-            response["port"] = int.from_bytes(request[84:86], "little")
-=======
             response["file_hash"] = request[12:44].decode()
             response["peerID"] = request[44:64].decode()
             response["downloaded"] = int.from_bytes(request[64:72], 'little')
@@ -94,7 +84,6 @@ class Request:
             response["event"] = int.from_bytes(request[88:92], "little")
             response["ip"] = ip_from_bytes(request[92:96])
             response["port"] = int.from_bytes(request[96:98], "little")
->>>>>>> 13cabd2cca1d82622136d11bc85f3e2fb180af05
             return response
 
         return response
