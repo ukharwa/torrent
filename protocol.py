@@ -142,10 +142,18 @@ def peer_from_bytes(data):
 def getpackets(filename, packet_size):
     packets = {}
     with open(filename, "rb") as file:
-        while packet := file.read(packet_size):
-            packets[hashlib.sha256(packet)] = packet
-    file.close()
+        while piece := file.read(packet_size):
+            data = bytearray(4 + len(piece))
+            data[0:4] = len(piece).to_bytes(4, 'little')
+            data[4:] = piece 
+            packets[hashlib.sha256(piece).hexdigest()] = data 
     return packets
 
-           
-        
+def recv_all(sock, size):
+    data = b""
+    while len(data) < size:
+        packet = sock.recv(size - len(data))
+        if not packet:
+            break  # Connection closed
+        data += packet
+    return data

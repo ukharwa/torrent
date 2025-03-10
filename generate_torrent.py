@@ -16,8 +16,7 @@ def filetotorrent(filename, piece_size, tracker_ip, tracker_port):            #r
 
     with open(filename, "rb") as file:            
         data = file.read()
-    file.close()
-
+    
     file_size = len(data)                  # Total size of the file in bytes
     info_hash = hashlib.sha256(data).hexdigest() #hash of the original file in bytes
     packets = generate_packet_hashes(filename, piece_size)             # List of packets
