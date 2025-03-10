@@ -11,8 +11,6 @@ protocol = Request()
 
 def connect_to_tracker(file_hash, downloaded, uploaded, left, ip, port):
     while True:
-            print("ERROR: Too many errors, exiting...")
-            break
         print("Searching for tracker...")
         udp_client.sendto(protocol.connection_request(), (tracker_ip, tracker_port))
         data, _ = udp_client.recvfrom(12)
