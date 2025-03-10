@@ -13,6 +13,7 @@ protocol = Request()
 print("Tracker online")
 
 while True:
+    print(files)
     data, addr = tracker.recvfrom(1024)
     action = int.from_bytes(data[0:4], "little")
 
@@ -37,7 +38,7 @@ while True:
                 else:
                     files[response["file_hash"]] = dict(seeders = {response["peerID"] : peer}, leechers = {})
             print("Peer " + response["peerID"] + " connected")
-            tracker.sendto(protocol.announce_response(300, 20, 100), addr)
+            tracker.sendto(protocol.announce_response(300, len(response["file_hash"]["leechers"]), len(response["file_hash"]["seeders"])), addr)
         else:
             print("Invalid connectionID received")
             tracker.sendto(protocol.send_error("Invalid connectionID"), addr)
