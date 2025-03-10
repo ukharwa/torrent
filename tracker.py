@@ -30,15 +30,16 @@ while True:
         if decode_connectionID(connectionID) in connections:
             print("connectionID found")
             peer = peer_from_announce(response)
+            file = response["file_hash"]
             if response["left"] > 0:
-                files[response["file_hash"]]["leechers"][response["peerID"]] = peer
+                files[file]["leechers"][response["peerID"]] = peer
             else:
-                if response["file_hash"] in  files:
-                     files[response["file_hash"]]["seeders"][response["peerID"]] = peer
+                if file in  files:
+                     files[file]["seeders"][response["peerID"]] = peer
                 else:
-                    files[response["file_hash"]] = dict(seeders = {response["peerID"] : peer}, leechers = {})
+                    files[file] = dict(seeders = {response["peerID"] : peer}, leechers = {})
             print("Peer " + response["peerID"] + " connected")
-            tracker.sendto(protocol.announce_response(300, len(response["file_hash"]["leechers"]), len(response["file_hash"]["seeders"]), response["file_hash"]["seeders"].values()), addr)
+            tracker.sendto(protocol.announce_response(300, len(files[file]["leechers"]), len(files[file]["seeders"]), list(files[file]["seeders"].values())), addr)
         else:
             print("Invalid connectionID received")
             tracker.sendto(protocol.send_error("Invalid connectionID"), addr)

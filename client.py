@@ -32,7 +32,7 @@ while True:
         connectionID = response["connectionID"]
 
         print("Attempting connection...")
-        announce = protocol.announce_request(connectionID,file_hash, "ukharwa0000000000000", 0, 0, left, 1, "192.168.237.129", 9000)
+        announce = protocol.announce_request(connectionID, file_hash, "ukharwa0000000000000", 0, 0, left, 1, "192.168.237.129", 9000)
         client.sendto(announce, (tracker_ip, tracker_port))
 
         data, _ = client.recvfrom(1024)
