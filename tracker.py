@@ -37,6 +37,7 @@ while True:
                     files[file]["leechers"][response["peerID"]] = peer
                 else:
                     tracker.sendto(protocol.send_error("No seeders for this file"), addr)
+                    continue
             else:
                 if file in files:
                      files[file]["seeders"][response["peerID"]] = peer

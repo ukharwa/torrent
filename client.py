@@ -2,7 +2,7 @@ import socket
 import json
 from protocol import Request, decode_connectionID
 
-client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 tracker_ip = "196.42.75.186"
 tracker_port = 6969
@@ -50,3 +50,14 @@ while True:
             print("Successfully connected to tracker...")
             print(response)
             break
+
+tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+def leech(response):
+    seeders = response["seeders"]
+    print(seeders)
+
+def seed(response):
+    pass
+
+leech(response)
