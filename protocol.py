@@ -7,30 +7,31 @@ class Request:
     
     def connection_request(self):
         data = bytearray(4)
-        action = 0
+        action = 0          #connect action
         data[0:4] = action.to_bytes(4, 'little')
         return data
     
     def connection_response(self, connectionID):
         data = bytearray(12)
-        action = 0
+        action = 0          #connect action
         data[0:4] = action.to_bytes(4, 'little')
         data[4:12] = connectionID
         return data
     
-    def announce_request(self, connectionID, torrent, peerID, downloaded, uploaded, left, event, ip, port):
-        data = bytearray(86)
-        action = 1
-        data[0:4] = action.to_bytes(4, 'little')
-        data[4:12] = connectionID
-        data[12:32] = torrent.encode()
-        data[32:52] = peerID.encode()
-        data[52:60] = downloaded.to_bytes(8, 'little')
-        data[60:68] = uploaded.to_bytes(8, 'little')
-        data[68:76] = left.to_bytes(8, 'little')
-        data[76:80] = event.to_bytes(4, 'little')
-        data[80:84] = ip_to_bytes(ip)
-        data[84:86] = port.to_bytes(2, 'little')
+    #Sends the information about the Peer and their corresponding  to the Tracker
+    def announce_request(self, connectionID, file_hash, peerID, downloaded, uploaded, left, event, ip, port):
+        data = bytearray(98)
+        action = 1                                          #announce action
+        data[0:4] = action.to_bytes(4, 'little')            #action 0: connect, 1: announce, 99: error
+        data[4:12] = connectionID                           
+        data[12:44] = file_hash.encode()                      
+        data[44:64] = peerID.encode()
+        data[64:72] = downloaded.to_bytes(8, 'little')
+        data[72:80] = uploaded.to_bytes(8, 'little')
+        data[80:88] = left.to_bytes(8, 'little')
+        data[88:92] = event.to_bytes(4, 'little')
+        data[92:96] = ip_to_bytes(ip)
+        data[96:98] = port.to_bytes(2, 'little')
         return data
 
     def announce_response(self, interval, leechers, seeders):
@@ -75,7 +76,7 @@ class Request:
 
         if action == 1:
             response["connectionID"] = request[4:12]
-            response["torrent"] = request[12:32].decode()
+            response["file_hash'"] = request[12:32].decode()
             response["peerID"] = request[32:52].decode()
             response["downloaded"] = int.from_bytes(request[52:60], 'little')
             response["uploaded"] = int.from_bytes(request[60:68])

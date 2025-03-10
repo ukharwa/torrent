@@ -8,7 +8,8 @@ def getnumpackets(filename):
         data = file.read()
         total_size = len(data)                  # Total size of the file in bytes
         num_packets = total_size // packet_size # Number of packets required to send the data
-        print(num_packets)
+        if total_size % packet_size != 0:       # If file size is not perfectly divisible by num_packets, adjust the last packet    
+            num_packets += 1   
     file.close()
     return num_packets if num_packets != 0 else 1 
 
@@ -23,7 +24,6 @@ def getpackets(filename):
     for i in range(num_packets):
         packet = data[i * packet_size: (i + 1) * packet_size]  # Slice the data into packets
         packets.append(packet)  # Append each packet to the list
-    packets.append(data[num_packets * packet_size:])  # Last packet gets remaining bytes
     return packets
 
 
