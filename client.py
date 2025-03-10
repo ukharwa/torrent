@@ -19,8 +19,12 @@ with open(input("Enter torrent file:"),"r") as torrent_file:
 downloaded = 0
 uploaded = 0
 left = actual_file_size
+error_count = 0
 
 while True:
+    if error_count == 5:
+        print("ERROR: Too many errors, exiting...")
+        break
     print("Searching for tracker...")
     client.sendto(protocol.connection_request(), (tracker_ip, tracker_port))
     data, _ = client.recvfrom(12)
@@ -41,9 +45,8 @@ while True:
         
         if action == 99:
             print("ERROR: " + response["ERROR"])
-
+            error_count += 1
         if action == 1:
             print("Successfully connected to tracker...")
-        break
-
-print(response)
+            print(response)
+            break
