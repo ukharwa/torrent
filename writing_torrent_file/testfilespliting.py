@@ -56,7 +56,6 @@ def filetotorrent(filename):            #reads a file and populates another file
         
 
 
-
-filename = "image3.png"
+filename = input("Enter file name: ")
 filetotorrent(filename)
     
