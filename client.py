@@ -1,5 +1,5 @@
-import socket
-import json
+import socket, json
+from peer import *
 from protocol import *
 
 udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -31,7 +31,7 @@ def connect_to_tracker(file_hash, downloaded, uploaded, left, ip, port):
             
             if action == 99:
                 print("ERROR: " + response["ERROR"])
-                error_count += 1
+
             if action == 1:
                 print("Successfully connected to tracker...")
                 print(response)

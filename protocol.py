@@ -139,9 +139,6 @@ def peer_from_bytes(data):
     port = int.from_bytes(data[4:6], 'little')
     return ip, port
 
-def generate_peerid(ip,secretkey):
-    return hashlib.sha256((ip+secretkey).encode()).hexdigest()
-
 def getpackets(filename, packet_size):
     packets = {}
     with open(filename, "rb") as file:
