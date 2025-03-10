@@ -115,3 +115,14 @@ def decode_connectionID(conID):
 
 def peer_from_announce(response):
     return Peer(response["ip"], response["port"], response["downloaded"], response["uploaded"], response["left"], response["event"], (time.time()).__trunc__())
+
+def peer_to_bytes(peer):
+    data = bytearray(6)
+    data[0:4] = ip_to_bytes(peer.ip)
+    data[4:6] = peer.port.to_bytes(2, 'little')
+    return data
+
+def peer_from_bytes(data):
+    ip = ip_from_bytes(data[0:4])
+    port = int.from_bytes(data[4:6], 'little')
+    return ip, port
