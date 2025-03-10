@@ -7,6 +7,7 @@ udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 tracker_ip = "196.42.75.186"
 tracker_port = 6969
 client_ip = socket.gethostbyname(socket.gethostname())
+client_port = 9001
 peerID = generate_peerid(client_ip, "Hello")
 
 protocol = Request()
@@ -57,9 +58,13 @@ tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 def leech(response):
     seeders = response["seeders"]
+    #list of seeders :(ip,port)
+    for s in seeders:
+        tcp_client.connect(s)
     print(seeders)
 
 def seed(response):
-    pass
+    tcp_client.bind((client_ip,client_port))
+    tcp_client.listen()
 
 leech(response)
