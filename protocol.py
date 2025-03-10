@@ -1,5 +1,6 @@
 import time
 from peer import Peer
+import hashlib
 
 class Request:
     def __init__(self):
@@ -20,18 +21,18 @@ class Request:
     
     #Sends the information about the Peer and their corresponding  to the Tracker
     def announce_request(self, connectionID, file_hash, peerID, downloaded, uploaded, left, event, ip, port):
-        data = bytearray(98)
+        data = bytearray(110)
         action = 1                                          #announce action
         data[0:4] = action.to_bytes(4, 'little')            #action 0: connect, 1: announce, 99: error
         data[4:12] = connectionID                           
         data[12:44] = file_hash.encode()                    #hash of the file being shared/recevied
-        data[44:64] = peerID.encode()
-        data[64:72] = downloaded.to_bytes(8, 'little')      #number of bytes downloaded
-        data[72:80] = uploaded.to_bytes(8, 'little')        #number of bytes uploaded
-        data[80:88] = left.to_bytes(8, 'little')            #number of bytes left to download
-        data[88:92] = event.to_bytes(4, 'little')           #0:none 1:completed 2:stopped
-        data[92:96] = ip_to_bytes(ip)                       #peers ip address
-        data[96:98] = port.to_bytes(2, 'little')            #connection port
+        data[44:76] = peerID.encode()
+        data[76:84] = downloaded.to_bytes(8, 'little')      #number of bytes downloaded
+        data[84:92] = uploaded.to_bytes(8, 'little')        #number of bytes uploaded
+        data[92:100] = left.to_bytes(8, 'little')            #number of bytes left to download
+        data[100:104] = event.to_bytes(4, 'little')           #0:none 1:completed 2:stopped
+        data[104:108] = ip_to_bytes(ip)                       #peers ip address
+        data[108:110] = port.to_bytes(2, 'little')            #connection port
         return data
 
     def announce_response(self, interval, num_leechers, num_seeders, seeders):#response to the leecher
@@ -87,13 +88,13 @@ class Request:
         if action == 1:
             response["connectionID"] = request[4:12]
             response["file_hash"] = request[12:44].decode()
-            response["peerID"] = request[44:64].decode()
-            response["downloaded"] = int.from_bytes(request[64:72], 'little')
-            response["uploaded"] = int.from_bytes(request[72:80])
-            response["left"] = int.from_bytes(request[80:88], "little")
-            response["event"] = int.from_bytes(request[88:92], "little")
-            response["ip"] = ip_from_bytes(request[92:96])
-            response["port"] = int.from_bytes(request[96:98], "little")
+            response["peerID"] = request[44:76].decode()
+            response["downloaded"] = int.from_bytes(request[76:84], 'little')
+            response["uploaded"] = int.from_bytes(request[84:92])
+            response["left"] = int.from_bytes(request[92:100], "little")
+            response["event"] = int.from_bytes(request[100:104], "little")
+            response["ip"] = ip_from_bytes(request[104:108])
+            response["port"] = int.from_bytes(request[108:110], "little")
             return response
 
         return response
@@ -137,3 +138,6 @@ def peer_from_bytes(data):
     ip = ip_from_bytes(data[0:4])
     port = int.from_bytes(data[4:6], 'little')
     return ip, port
+
+def generate_peerid(ip,secretkey):
+    return hashlib.sha256((ip+secretkey).encode()).hexdigest()
