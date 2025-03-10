@@ -1,11 +1,13 @@
 import socket
 import json
-from protocol import Request, decode_connectionID
+from protocol import *
 
 udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 tracker_ip = "196.42.75.186"
 tracker_port = 6969
+client_ip = socket.gethostbyname(socket.gethostname)
+peerID = generate_peerid(client_ip, "Hello")
 
 protocol = Request()
 
@@ -26,8 +28,8 @@ while True:
         print("ERROR: Too many errors, exiting...")
         break
     print("Searching for tracker...")
-    client.sendto(protocol.connection_request(), (tracker_ip, tracker_port))
-    data, _ = client.recvfrom(12)
+    udp_client.sendto(protocol.connection_request(), (tracker_ip, tracker_port))
+    data, _ = udp_client.recvfrom(12)
     action = int.from_bytes(data[0:4], 'little')
 
     if action == 0:
@@ -36,10 +38,10 @@ while True:
         connectionID = response["connectionID"]
 
         print("Attempting connection...")
-        announce = protocol.announce_request(connectionID, file_hash, "ukharwa0000000000000", 0, 0, left, 1, "192.168.237.129", 9000)
-        client.sendto(announce, (tracker_ip, tracker_port))
+        announce = protocol.announce_request(connectionID, file_hash, peerID, 0, 0, left, 1, client_ip, 9000)
+        udp_client.sendto(announce, (tracker_ip, tracker_port))
 
-        data, _ = client.recvfrom(1024)
+        data, _ = udp_client.recvfrom(1024)
         response = protocol.client_decode(data)
         action = int.from_bytes(data[0:4], 'little')       
         
