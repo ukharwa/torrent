@@ -18,7 +18,7 @@ class Request:
         data[4:12] = connectionID
         return data
     
-    def announce_request(self, connectionID, torrent, peerID, downloaded, uploaded, left, event, ip, port):
+    def first_announce(self, connectionID, torrent, peerID, downloaded, uploaded, left, event, ip, port):
         data = bytearray(86)
         action = 1
         data[0:4] = action.to_bytes(4, 'little')
