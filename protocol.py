@@ -34,13 +34,16 @@ class Request:
         data[96:98] = port.to_bytes(2, 'little')
         return data
 
-    def announce_response(self, interval, leechers, seeders):
-        data = bytearray(20)
+    def announce_response(self, interval, num_leechers, num_seeders, seeders):
+        data = bytearray(20 + 6*num_seeders)
         action = 1
         data[0:4] = action.to_bytes(4, 'little')
         data[4:12] = interval.to_bytes(8, 'little')
-        data[12:16] = leechers.to_bytes(4, 'little')
-        data[16:20] = seeders.to_bytes(4, 'little')
+        data[12:16] = num_leechers.to_bytes(4, 'little')
+        data[16:20] = num_seeders.to_bytes(4, 'little')
+        for i in range(0, len(seeders)):
+            data[20+(i * 6): 26+(i*6)] = peer_to_bytes(seeders[i])
+
         return data
     
     def send_error(self, message):
@@ -61,8 +64,14 @@ class Request:
 
         if action == 1:
             response["interval"] = int.from_bytes(request[4:12], 'little')
-            response["leechers"] = int.from_bytes(request[12:16], 'little')
-            response["seeders"] = int.from_bytes(request[16:20], 'little')
+            response["num_leechers"] = int.from_bytes(request[12:16], 'little')
+            num_seeders  = int.from_bytes(request[16:20], 'little')
+            response["num_seeders"] = num_seeders
+            seeders = []
+            for i in range(num_seeders):
+                seeders.append(peer_from_bytes(request[20 + (i*6):26+(i*6)]))
+            response["seeders"] = seeders
+            
             return response
 
         if action == 99:
@@ -87,6 +96,7 @@ class Request:
             return response
 
         return response
+
 
 def ip_to_bytes(ip):
     ip_list = ip.split(".")
