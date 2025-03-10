@@ -38,7 +38,7 @@ while True:
                 else:
                     files[response["file_hash"]] = dict(seeders = {response["peerID"] : peer}, leechers = {})
             print("Peer " + response["peerID"] + " connected")
-            tracker.sendto(protocol.announce_response(300, len(response["file_hash"]["leechers"]), len(response["file_hash"]["seeders"])), addr)
+            tracker.sendto(protocol.announce_response(300, len(response["file_hash"]["leechers"]), len(response["file_hash"]["seeders"]), response["file_hash"]["seeders"].values()), addr)
         else:
             print("Invalid connectionID received")
             tracker.sendto(protocol.send_error("Invalid connectionID"), addr)
