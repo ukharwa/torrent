@@ -141,3 +141,14 @@ def peer_from_bytes(data):
 
 def generate_peerid(ip,secretkey):
     return hashlib.sha256((ip+secretkey).encode()).hexdigest()
+
+def getpackets(filename, packet_size):
+    packets = {}
+    with open(filename, "rb") as file:
+        while packet := file.read(packet_size):
+            packets[hashlib.sha256(packet)] = packet
+    file.close()
+    return packets
+
+           
+        

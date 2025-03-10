@@ -12,12 +12,13 @@ peerID = generate_peerid(client_ip, "Hello")
 
 protocol = Request()
 
-#decode .cum into variables
-#take in a file.cum 
+#decode .ppp into variables
+#take in a file.ppp 
 with open(input("Enter torrent file:"),"r") as torrent_file:
     torrent_data = json.load(torrent_file)
     actual_file_size = torrent_data["file_size"]
     file_hash = torrent_data["file_hash"]
+    packet_list = torrent_data["packet_list"]
 
 downloaded = 0
 uploaded = 0
@@ -61,10 +62,35 @@ def leech(response):
     #list of seeders :(ip,port)
     for s in seeders:
         tcp_client.connect(s)
-    print(seeders)
 
-def seed(response):
+    file = []
+
+    while len(packet_list > 0):
+        tcp_client.send(packet_list[0].encode())
+        packet = tcp_client.recv(512*1024)
+        if hashlib.sha256(packet) == packet_list[0]:
+            file.append(packet)
+            packet_list.pop(packet_list[0])
+    
+    tcp_client.send(0)
+
+    with open("new_file.png", "wb") as new_file:
+        for p in file:
+            new_file.write(p)
+    new_file.close()
+
+def seed(filename):
     tcp_client.bind((client_ip,client_port))
     tcp_client.listen()
 
-leech(response)
+    packets = getpackets(filename, 512*1024)
+
+    conn, addr = tcp_client.accept()
+
+    while True:
+        packet_hash = conn.recv(32).decode()
+        if packet_hash == 0:
+            break
+        conn.send(packets[packet_hash])
+    
+    tcp_client.close()

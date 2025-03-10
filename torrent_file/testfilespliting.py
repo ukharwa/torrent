@@ -42,14 +42,14 @@ def filetotorrent(filename):            #reads a file and populates another file
     file_packet_hashes = [hashlib.sha256(packet).hexdigest() for packet in packets] #hosh of each packet in bytes
 
     torrent_data = {
+        "file_hash": file_hash,
         "file_size": total_size,
         "num_packets": num_packets,
         "size_of_packets": size_of_packets,
-        "file_hash": file_hash,
-        "file_packet_hashes": file_packet_hashes
+        "packet_list": file_packet_hashes
     }
 
-    torrent_filename = file.name.split(".")[0] + ".cum"
+    torrent_filename = file.name.split(".")[0] + ".ppp"
 
     with open(torrent_filename, "w") as torrent_file:
         json.dump(torrent_data, torrent_file, indent=4)  # Write JSON data with pretty formatting
