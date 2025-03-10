@@ -13,6 +13,7 @@ protocol = Request()
 print("Tracker online")
 
 while True:
+    print(files)
     data, addr = tracker.recvfrom(1024)
     action = int.from_bytes(data[0:4], "little")
 

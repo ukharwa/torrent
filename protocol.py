@@ -76,7 +76,7 @@ class Request:
 
         if action == 1:
             response["connectionID"] = request[4:12]
-            response["file_hash'"] = request[12:44].decode()
+            response["file_hash"] = request[12:44].decode()
             response["peerID"] = request[44:64].decode()
             response["downloaded"] = int.from_bytes(request[64:72], 'little')
             response["uploaded"] = int.from_bytes(request[72:80])
