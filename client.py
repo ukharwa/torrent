@@ -118,3 +118,5 @@ torrent_file = input("Enter the .ppp file name: ")
 file = input("Enter the file name: ")
 
 leech(torrent_file)
+seed(torrent_file, file)
+
