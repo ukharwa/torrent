@@ -5,7 +5,8 @@ from protocol import *
 tracker = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 tracker.bind(('localhost', 6969))
 
-peers = {}
+files = {
+}
 connections = {} 
 
 protocol = Request()
@@ -27,7 +28,14 @@ while True:
         connectionID = response["connectionID"]
         if decode_connectionID(connectionID) in connections:
             print("connectionID found")
-            peers[response["peerID"]] = peer_from_announce(response)
+            peer = peer_from_announce(response)
+            if response["left"] > 0:
+                files[response["file_hash"]]["leechers"][response["peerID"]] = peer
+            else:
+                if response["file_hash"] in  files:
+                     files[response["file_hash"]]["seeders"][response["peerID"]] = peer
+                else:
+                    files[response["file_hash"]] = dict(seeders = {response["peerID"] : peer}, leechers = {})
             print("Peer " + response["peerID"] + " connected")
             tracker.sendto(protocol.announce_response(300, 20, 100), addr)
         else:

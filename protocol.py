@@ -18,7 +18,7 @@ class Request:
         data[4:12] = connectionID
         return data
     
-    #Sends the information about the Peer and the current packet they associated with to the Tracker
+    #Sends the information about the Peer and their corresponding  to the Tracker
     def announce_request(self, connectionID, file_hash, peerID, downloaded, uploaded, left, event, ip, port):
         data = bytearray(98)
         action = 1                                          #announce action
