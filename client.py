@@ -65,7 +65,7 @@ def leech(filename):
 
     file = []
 
-    while len(packet_list > 0):
+    while len(packet_list) > 0:
         tcp_client.send(packet_list[0].encode())
         packet = tcp_client.recv(512*1024)
         if hashlib.sha256(packet) == packet_list[0]:
@@ -117,4 +117,4 @@ def seed(torrent_file, filename):
 torrent_file = input("Enter the .ppp file name: ")
 file = input("Enter the file name: ")
 
-seed(torrent_file, file)
+leech(torrent_file)
