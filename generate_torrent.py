@@ -22,14 +22,12 @@ def filetotorrent(filename, piece_size, tracker_ip, tracker_port):            #r
     info_hash = hashlib.sha256(data).hexdigest() #hash of the original file in bytes
     packets = generate_packet_hashes(filename, piece_size)             # List of packets
 
-    file_packet_hashes = [hashlib.sha256(packet).hexdigest() for packet in packets] #hosh of each packet in bytes
-
     torrent_data = {
         "tracker": (tracker_ip, tracker_port),
         "info hash": info_hash,
         "file size": file_size,
         "piece length": piece_size,
-        "pieces": file_packet_hashes
+        "pieces": packets 
     }
 
     torrent_filename = file.name.split(".")[0] + ".ppp"
@@ -40,7 +38,7 @@ def filetotorrent(filename, piece_size, tracker_ip, tracker_port):            #r
 
 
 filename = input("Enter file name: ")
-piece_size = input("Enter piece size: ")
+piece_size = int(input("Enter piece size (kb): ")) * 1024
 tracker_ip = input("Enter tracker ip: ")
 tracker_port = input("Enter tracker port: ")
 

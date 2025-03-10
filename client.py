@@ -4,10 +4,15 @@ from protocol import *
 
 udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-tracker_ip = "196.42.75.186"
+tracker_ip = "localhost"
 tracker_port = 6969
 
 protocol = Request()
+
+def read_torrent_file(filename):
+    with open(filename,"r") as torrent_file:
+        data = json.load(torrent_file)
+    return data
 
 def connect_to_tracker(file_hash, downloaded, uploaded, left, ip, port):
     while True:
@@ -43,36 +48,32 @@ def leech(filename):
     client_ip = socket.gethostbyname(socket.gethostname())
     client_port = 9001
 
-    with open(filename,"r") as torrent_file:
-        torrent_data = json.load(torrent_file)
-        actual_file_size = torrent_data["file_size"]
-        file_hash = torrent_data["file_hash"]
-        packet_list = torrent_data["packet_list"]
-    torrent_file.close()
+    torrent = read_torrent_file(filename)
+    pieces = torrent["pieces"]
 
     downloaded = 0
     uploaded = 0
     left = 1000
 
-    response = connect_to_tracker(file_hash, downloaded, uploaded, left, client_ip, client_port)
+    response = connect_to_tracker(torrent["info hash"], downloaded, uploaded, left, client_ip, client_port)
 
     tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     seeders = response["seeders"]
-    #list of seeders :(ip,port)
+
     for s in seeders:
         tcp_client.connect(s)
 
     file = []
 
-    while len(packet_list) > 0:
-        tcp_client.send(packet_list[0].encode())
+    while len(pieces) > 0:
+        tcp_client.send(pieces[0].encode())
         packet = tcp_client.recv(512*1024)
-        if hashlib.sha256(packet) == packet_list[0]:
+        if hashlib.sha256(packet) == pieces[0]:
             file.append(packet)
-            packet_list.pop(packet_list[0])
+            pieces.pop(pieces[0])
     
-    tcp_client.send(0)
+    tcp_client.send(b"0")
 
     with open("new_file.png", "wb") as new_file:
         for p in file:
@@ -84,18 +85,14 @@ def seed(torrent_file, filename):
     client_ip = socket.gethostbyname(socket.gethostname())
     client_port = 9001
 
-    with open(torrent_file,"r") as torrent_file:
-        torrent_data = json.load(torrent_file)
-        actual_file_size = torrent_data["file_size"]
-        file_hash = torrent_data["file_hash"]
-        packet_list = torrent_data["packet_list"]
-    torrent_file.close()
+    torrent = read_torrent_file(torrent_file)
+    pieces = torrent["pieces"]
 
     downloaded = 0
     uploaded = 0
     left = 0
 
-    response = connect_to_tracker(file_hash, downloaded, uploaded, left, client_ip, client_port)
+    response = connect_to_tracker(torrent["info hash"], downloaded, uploaded, left, client_ip, client_port)
 
     tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_client.bind((client_ip,client_port))
@@ -103,7 +100,7 @@ def seed(torrent_file, filename):
 
     packets = getpackets(filename, 512*1024)
 
-    conn, addr = tcp_client.accept()
+    conn, _ = tcp_client.accept()
 
     while True:
         packet_hash = conn.recv(32).decode()
