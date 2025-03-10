@@ -28,8 +28,8 @@ class Request:
         data[44:64] = peerID.encode()
         data[64:72] = downloaded.to_bytes(8, 'little')      #number of bytes downloaded
         data[72:80] = uploaded.to_bytes(8, 'little')        #number of bytes uploaded
-        data[80:88] = left.to_bytes(8, 'little')
-        data[88:92] = event.to_bytes(4, 'little')
+        data[80:88] = left.to_bytes(8, 'little')            #number of bytes left to download
+        data[88:92] = event.to_bytes(4, 'little')           #0:none 1:completed 2:stopped
         data[92:96] = ip_to_bytes(ip)
         data[96:98] = port.to_bytes(2, 'little')
         return data
@@ -76,14 +76,14 @@ class Request:
 
         if action == 1:
             response["connectionID"] = request[4:12]
-            response["file_hash'"] = request[12:44].decode()
-            response["peerID"] = request[44:64].decode()
-            response["downloaded"] = int.from_bytes(request[64:72], 'little')
-            response["uploaded"] = int.from_bytes(request[72:80])
-            response["left"] = int.from_bytes(request[80:88], "little")
-            response["event"] = int.from_bytes(request[88:92], "little")
-            response["ip"] = ip_from_bytes(request[92:96])
-            response["port"] = int.from_bytes(request[96:98], "little")
+            response["file_hash'"] = request[12:32].decode()
+            response["peerID"] = request[32:52].decode()
+            response["downloaded"] = int.from_bytes(request[52:60], 'little')
+            response["uploaded"] = int.from_bytes(request[60:68])
+            response["left"] = int.from_bytes(request[68:76], "little")
+            response["event"] = int.from_bytes(request[76:80], "little")
+            response["ip"] = ip_from_bytes(request[80:84])
+            response["port"] = int.from_bytes(request[84:86], "little")
             return response
 
         return response

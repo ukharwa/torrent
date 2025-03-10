@@ -1,10 +1,6 @@
 {
     "file_size": 3069720,
-<<<<<<< HEAD
-    "num_packets": 5,
-=======
     "num_packets": 6,
->>>>>>> cae388b429bec65aeed4a879b84b68573bf31261
     "size_of_packets": [
         524288,
         524288,
