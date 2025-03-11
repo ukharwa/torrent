@@ -4,7 +4,7 @@ from src.protocol import *
 
 udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-tracker_ip = "196.42.74.91"
+tracker_ip = "196.42.74.94"
 tracker_port = 6969
 
 protocol = Request()
@@ -76,5 +76,5 @@ def seed(torrent_file, filename):
 
 torrent_file = input("Enter the .ppp file name: ")
 
-seed("torrent_file/"+torrent_file+".ppp", "torrent_file/"+torrent_file+".png")
+seed(torrent_file+".ppp", torrent_file+".jpeg")
 
