@@ -9,7 +9,7 @@ from pathlib import Path
 
 # from tkinter import *
 # Explicit imports to satisfy Flake8
-from tkinter import Label, Tk, Canvas, Entry, Text, Button, PhotoImage
+from tkinter import Label, Tk, Canvas, Entry, Text, Button, PhotoImage, filedialog
 import tkinter as tk
 
 
@@ -21,11 +21,16 @@ ASSETS_PATH = OUTPUT_PATH / Path("assets/frame0")
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
+def open_file():
+        global file_path
+        file_path = tk.filedialog.askopenfilename(title="Select A File", filetypes=(("PPP Files", "*.ppp"),))
 
 # File selection button
 def file_selection_button_clicked():
-    print("file selection button clicked")
-
+    print("aosdhuflasdkflajk")
+    file_path = open_file()
+    print(file_path)
+    
 # Upload button
 def upload_button_clicked():
     print("upload button clicked")
@@ -112,7 +117,7 @@ button_1 = Button(
     image=button_image_1,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: print("button_1 clicked"),
+    command= open_file,
     relief="flat"
 )
 button_1.place(
