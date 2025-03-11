@@ -5,7 +5,7 @@ from src.protocol import *
 
 udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-tracker_ip = "localhost"
+tracker_ip = "196.42.74.94"
 tracker_port = 6969
 
 protocol = Request()
@@ -68,7 +68,7 @@ def connect_to_tracker(file_hash, downloaded, uploaded, left, ip, port):
 def leech(torrent_info, cache):
     client_ip = socket.gethostbyname(socket.gethostname())
     client_port = 9001
-
+    print(torrent_info)
     pieces = torrent_info["pieces"]
 
     downloaded = cache["downloaded"]
@@ -99,7 +99,7 @@ def leech(torrent_info, cache):
     
     tcp_client.send(b"\xff")
 
-    with open("test_file.png", "wb") as new_file:
+    with open(cache["file path"], "wb") as new_file:
         for p in file:
             new_file.write(p)
 
@@ -133,16 +133,15 @@ def seed(torrent_info, cache):
     
     tcp_client.close()
 
-
 def main():
     torrent_file = input("Enter name of torrent (.ppp) file: ")
     torrent_info = read_torrent_file(torrent_file)
-
-    cache_info = check_cache(torrent_info["file name"], torrent_info["info hash"], len(torrent_info["pieces"]))
+    
+    cache_info = check_cache(torrent_info)
 
     if cache_info["left"] == 0:
         seed(torrent_info, cache_info)
     else:
-        leech(torrent_file, cache_info)
+        leech(torrent_info, cache_info)
 
 main()

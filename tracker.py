@@ -1,6 +1,6 @@
 import time
 import socket
-from protocol import *
+from src.protocol import *
 
 tracker = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 tracker.bind(('196.42.74.94', 6969))

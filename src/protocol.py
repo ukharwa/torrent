@@ -1,5 +1,5 @@
 import time
-from peer import Peer
+from src.peer import Peer
 import hashlib
 
 class Request:
