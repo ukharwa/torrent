@@ -45,10 +45,10 @@ def filetotorrent(filename, piece_size, tracker_ip, tracker_port):            #r
         
 
 
-# filename = input("Enter file name: ")
-# piece_size = int(input("Enter piece size (kb): ")) * 1024
-# tracker_ip = input("Enter tracker ip: ")
-# tracker_port = input("Enter tracker port: ")
+filename = input("Enter file name: ")
+piece_size = int(input("Enter piece size (kb): ")) * 1024
+tracker_ip = input("Enter tracker ip: ")
+tracker_port = int(input("Enter tracker port: "))
 
-# filetotorrent(filename, piece_size, tracker_ip, tracker_port)
+filetotorrent(filename, piece_size, tracker_ip, tracker_port)
     

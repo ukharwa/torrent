@@ -1,6 +1,7 @@
 import socket, json
 from src.peer import *
 from src.protocol import *
+from testgui import gui
 
 udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 protocol = Request()
@@ -124,19 +125,19 @@ def seed(torrent_info, cache, port):
 
 def main():
 
-    torrent_file = input("Enter name of torrent (.ppp) file: ")
+    torrent_file = gui()
     torrent_info = read_torrent_file(torrent_file)
     
     cache = check_cache(torrent_info)
 
     client_port = 9001
-
-
+    
     downloaded = cache["downloaded"]
     uploaded = cache["uploaded"]
     left = cache["left"]
 
-    response = connect_to_tracker(torrent_info["tracker"], torrent_info["info hash"], downloaded, uploaded, left, client_ip, client_port)
+    print(tuple(torrent_info["tracker"]))
+    response = connect_to_tracker(tuple(torrent_info["tracker"]), torrent_info["info hash"], downloaded, uploaded, left, socket.gethostbyname(socket.gethostname()), client_port)
 
     if cache["left"] == 0:
         print("Seeding...")
