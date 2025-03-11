@@ -17,7 +17,7 @@ def read_torrent_file(filename):
 
 def check_cache(torrent_info):
     try:
-        with open("."+torrent_info["info hash"], "r") as file:
+        with open("cache/."+torrent_info["info hash"], "r") as file:
             data = json.load(file)
         return data
     except FileNotFoundError:
@@ -29,7 +29,7 @@ def check_cache(torrent_info):
             "pieces": len(torrent_info["pieces"])
         }
 
-        with open("."+torrent_info["info hash"], "w") as file:
+        with open("cache/."+torrent_info["info hash"], "w") as file:
             json.dump(data, file, indent=4)  # Write JSON data with pretty formatting
         
         return data
@@ -92,10 +92,12 @@ def leech(torrent_info, cache):
         piece_size = tcp_client.recv(4)
         piece = recv_all(tcp_client, int.from_bytes(piece_size, "little"))
 
-        print(len(piece))
         if hashlib.sha256(piece).hexdigest() == p:
             print("packet received")
             file.append(piece)
+            left -= len(piece)
+            downloaded += len(piece)
+            
     
     tcp_client.send(b"\xff")
 
@@ -103,6 +105,12 @@ def leech(torrent_info, cache):
         for p in file:
             new_file.write(p)
 
+    cache["downloaded"] = downloaded
+    cache["uploaded"] = uploaded
+    cache["left"] = left
+
+    with open("cache/."+torrent_info["info hash"], "w") as file:
+            json.dump(cache, file, indent=4)
 
 def seed(torrent_info, cache):
     client_ip = socket.gethostbyname(socket.gethostname())
@@ -140,8 +148,10 @@ def main():
     cache_info = check_cache(torrent_info)
 
     if cache_info["left"] == 0:
+        print("Seeding...")
         seed(torrent_info, cache_info)
     else:
+        print("Leeching")
         leech(torrent_info, cache_info)
 
 main()
