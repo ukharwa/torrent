@@ -34,6 +34,9 @@ def check_cache(torrent_info):
         
         return data
 
+def update_cache(cache_name, data):
+    with open("cache/."+cache_name, "w") as file:
+            json.dump(data, file, indent=4)
 
 def connect_to_tracker(file_hash, downloaded, uploaded, left, ip, port):
     while True:
@@ -109,8 +112,8 @@ def leech(torrent_info, cache):
     cache["uploaded"] = uploaded
     cache["left"] = left
 
-    with open("cache/."+torrent_info["info hash"], "w") as file:
-            json.dump(cache, file, indent=4)
+    update_cache(torrent_info["file hash"], cache)
+    
 
 def seed(torrent_info, cache):
     client_ip = socket.gethostbyname(socket.gethostname())
@@ -138,8 +141,16 @@ def seed(torrent_info, cache):
             print("breaking")
             break
         conn.sendall(packets[piece_hash])
+        uploaded += len(packets[piece_hash] - 4)
     
     tcp_client.close()
+
+    cache["downloaded"] = downloaded
+    cache["uploaded"] = uploaded
+    cache["left"] = left
+
+    update_cache(torrent_info["file hash"], cache)
+
 
 def main():
     torrent_file = input("Enter name of torrent (.ppp) file: ")
