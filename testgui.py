@@ -1,27 +1,37 @@
 import tkinter as tk
 from tkinter import filedialog
-import testfilespliting as torrent
+import json
+import generate_torrent as torrent
 
 # Create the main window
 root = tk.Tk()
-root.title("My First Tkinter App")
+root.title("App")
 root.geometry("500x700")  # Width x Height
-label = tk.Label(root,text="Seeder", font=("Arial",14))
+label = tk.Label(root,text="PP Protocol", font=("Arial",14))
 label.pack(pady=10)
 
 def open_file():
     
-    file_path = filedialog.askopenfilename(title="Select a File",
-                                           filetypes=[("All Files", "*.*"))
-    
-    print(file_path)
-    if file_path:  # If a file is selected
-        torrent_data = torrent.filetotorrent(file_path)
-        print(torrent_data)
-        text_box.insert(tk.END, torrent_data)  # Display content in text widget
+    file_path = filedialog.askopenfilename(title="Select A File", filetypes=(("PPP Files", "*.ppp"),))
+  
+    if file_path:
+        print(f"Selected file: {file_path}")
 
+        with open(file_path, "r") as file:
+             data = json.load(file)
 
-button = tk.Button(root,text="Seed a file",command=open_file)
+        text_box.insert(tk.END, data["info hash"]) 
+    else:
+            print("No file selected")
+
+button = tk.Button(root,text="Seed a file",
+                   font=("Helvetica",11),
+                   bg= "green",
+                   fg="white",
+                   padx=5, pady=5,
+                   relief="flat",
+                   border=0,
+                   command=open_file)
 button.pack(pady=5)
 text_box = tk.Text(height=10,width=50)
 text_box.pack(pady=10)
