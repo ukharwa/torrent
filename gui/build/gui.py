@@ -10,6 +10,8 @@ from pathlib import Path
 # from tkinter import *
 # Explicit imports to satisfy Flake8
 from tkinter import Label, Tk, Canvas, Entry, Text, Button, PhotoImage
+import tkinter as tk
+
 
 
 OUTPUT_PATH = Path(__file__).parent
@@ -18,6 +20,31 @@ ASSETS_PATH = OUTPUT_PATH / Path("assets/frame0")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
+
+
+# File selection button
+def file_selection_button_clicked():
+    print("file selection button clicked")
+
+# Upload button
+def upload_button_clicked():
+    print("upload button clicked")
+
+
+#Cancel button
+def cancel_button_clicked():
+    print("cancel button clicked")
+    
+
+# Button hover
+def button_1_hover(e):
+    button_1.config(
+        image=button_image_hover_1
+    )
+def button_1_leave(e):
+    button_1.config(
+        image=button_image_1
+    )
 
 
 window = Tk()
@@ -98,53 +125,37 @@ button_1.place(
 button_image_hover_1 = PhotoImage(
     file=relative_to_assets("button_hover_1.png"))
 
-def button_1_hover(e):
-    button_1.config(
-        image=button_image_hover_1
-    )
-def button_1_leave(e):
-    button_1.config(
-        image=button_image_1
-    )
 
 button_1.bind('<Enter>', button_1_hover)
 button_1.bind('<Leave>', button_1_leave)
 
 
-# buttons
-button_image_2 = PhotoImage(
-    file=relative_to_assets("button_2.png"))
-button_2 = Button(
-    image=button_image_2,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: print("button_2 clicked"),
-    relief="flat"
-)
-button_2.place(
-    x=164.0,
-    y=251.0,
-    width=125.0,
-    height=39.0
-)
 
 
 
-button_image_3 = PhotoImage(
-    file=relative_to_assets("button_3.png"))
-button_3 = Button(
-    image=button_image_3,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: print("button_3 clicked"),
-    relief="flat"
-)
-button_3.place(
-    x=324.0,
-    y=251.0,
-    width=125.0,
-    height=39.0
-)
+# PLace the button in the frame - integrating the icon with the actual button
+
+upload_button_image = PhotoImage(file=relative_to_assets("button_2.png"))
+upload_button = canvas.create_image(164.0, 251.0, image=upload_button_image, anchor=tk.NW)
+upload_image = PhotoImage(file=relative_to_assets("image_2.png"))
+
+upload_icon = canvas.create_image(210.0, 251.0, image=upload_image, anchor=tk.NW)
+
+canvas.tag_bind(upload_button, '<Button-1>', lambda e: upload_button_clicked())
+canvas.tag_bind(upload_icon, '<Button-1>', lambda e: upload_button_clicked())
+
+
+    
+# PLace the button in the frame - integrating the icon with the actual button
+cancel_button_image = PhotoImage(file=relative_to_assets("button_3.png"))
+cancel_button = canvas.create_image(324.0, 251.0, image=cancel_button_image, anchor=tk.NW)
+cancel_image = PhotoImage(file=relative_to_assets("image_1.png"))
+
+cancel_icon = canvas.create_image(370.0, 251.0, image=cancel_image, anchor=tk.NW)
+
+canvas.tag_bind(cancel_button, '<Button-1>', lambda e: cancel_button_clicked())
+canvas.tag_bind(cancel_icon, '<Button-1>', lambda e: cancel_button_clicked())
+
 
 
 
@@ -188,16 +199,6 @@ entry_2.place(
     height=37.0
 )
 
-
-# images on buttons
-image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
-button_1_icon = Label(window, image=image_image_1, bg='#DF6B6B', bd=0)
-button_1_icon.place(x=370.0, y=251.0)
-
-
-image_image_2 = PhotoImage(file=relative_to_assets("image_2.png"))
-button_2_icon = Label(window, image=image_image_2, bg='#9BDD72', bd=0)
-button_2_icon.place(x=205.0, y=251.0)
 
 window.resizable(False, False)
 window.mainloop()
