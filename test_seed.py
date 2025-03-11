@@ -44,55 +44,17 @@ def connect_to_tracker(file_hash, downloaded, uploaded, left, ip, port):
     return response
 
 
-def leech(filename):
-    client_ip = socket.gethostbyname(socket.gethostname())
-    client_port = 9001
-
-    torrent = read_torrent_file(filename)
-    pieces = torrent["pieces"]
-
-    downloaded = 0
-    uploaded = 0
-    left = 1000
-
-    response = connect_to_tracker(torrent["info hash"], downloaded, uploaded, left, client_ip, client_port)
-
-    tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    seeders = response["seeders"]
-
-    for s in seeders:
-        tcp_client.connect(s)
-
-    file = []
-
-    while len(pieces) > 0:
-        tcp_client.send(pieces[0].encode())
-        packet = tcp_client.recv(512*1024)
-        if hashlib.sha256(packet) == pieces[0]:
-            file.append(packet)
-            pieces.pop(pieces[0])
-    
-    tcp_client.send(b"0")
-
-    with open("new_file.png", "wb") as new_file:
-        for p in file:
-            new_file.write(p)
-    new_file.close()
-
-
 def seed(torrent_file, filename):
     client_ip = socket.gethostbyname(socket.gethostname())
     client_port = 9001
 
     torrent = read_torrent_file(torrent_file)
-    pieces = torrent["pieces"]
 
     downloaded = 0
     uploaded = 0
     left = 0
 
-    response = connect_to_tracker(torrent["info hash"], downloaded, uploaded, left, client_ip, client_port)
+    _ = connect_to_tracker(torrent["info hash"], downloaded, uploaded, left, client_ip, client_port)
 
     tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_client.bind((client_ip,client_port))
@@ -103,17 +65,16 @@ def seed(torrent_file, filename):
     conn, _ = tcp_client.accept()
 
     while True:
-        packet_hash = conn.recv(32).decode()
-        if packet_hash == 0:
+        piece_hash = conn.recv(32).hex()
+        if piece_hash == "ff":
+            print("breaking")
             break
-        conn.send(packets[packet_hash])
+        conn.sendall(packets[piece_hash])
     
     tcp_client.close()
 
 
 torrent_file = input("Enter the .ppp file name: ")
-file = input("Enter the file name: ")
 
-leech(torrent_file)
-seed(torrent_file, file)
+seed("torrent_file/"+torrent_file+".ppp", "torrent_file/"+torrent_file+".png")
 

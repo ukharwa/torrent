@@ -1,3 +1,4 @@
+import hashlib
 
 class Peer:
     def __init__(self, ip, port, downloaded, uploaded, left, event, announce_time):
@@ -8,3 +9,8 @@ class Peer:
         self.left = left
         self.announce_time = announce_time
         self.event = event
+
+    
+def generate_peerid(ip, secretkey):
+    return hashlib.sha256((ip+secretkey).encode()).hexdigest()
+

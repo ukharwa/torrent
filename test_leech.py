@@ -66,54 +66,26 @@ def leech(filename):
 
     file = []
 
-    while len(pieces) > 0:
-        tcp_client.send(pieces[0].encode())
-        packet = tcp_client.recv(512*1024)
-        if hashlib.sha256(packet) == pieces[0]:
-            file.append(packet)
-            pieces.pop(pieces[0])
-    
-    tcp_client.send(b"0")
+    for p in pieces:
+        tcp_client.send(bytes.fromhex(p))
+        
+        piece_size = tcp_client.recv(4)
+        piece = recv_all(tcp_client, int.from_bytes(piece_size, "little"))
 
-    with open("new_file.png", "wb") as new_file:
+        print(len(piece))
+        if hashlib.sha256(piece).hexdigest() == p:
+            print("packet received")
+            file.append(piece)
+    
+    tcp_client.send(b"\xff")
+
+    with open("test_file.png", "wb") as new_file:
         for p in file:
             new_file.write(p)
     new_file.close()
 
 
-def seed(torrent_file, filename):
-    client_ip = socket.gethostbyname(socket.gethostname())
-    client_port = 9001
-
-    torrent = read_torrent_file(torrent_file)
-    pieces = torrent["pieces"]
-
-    downloaded = 0
-    uploaded = 0
-    left = 0
-
-    response = connect_to_tracker(torrent["info hash"], downloaded, uploaded, left, client_ip, client_port)
-
-    tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    tcp_client.bind((client_ip,client_port))
-    tcp_client.listen()
-
-    packets = getpackets(filename, 512*1024)
-
-    conn, _ = tcp_client.accept()
-
-    while True:
-        packet_hash = conn.recv(32).decode()
-        if packet_hash == 0:
-            break
-        conn.send(packets[packet_hash])
-    
-    tcp_client.close()
-
-
 torrent_file = input("Enter the .ppp file name: ")
-file = input("Enter the file name: ")
 
-leech(torrent_file)
-seed(torrent_file, file)
+leech("torrent_file/"+torrent_file+".ppp")
 
