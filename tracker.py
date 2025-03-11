@@ -3,7 +3,7 @@ import socket
 from protocol import *
 
 tracker = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-tracker.bind(('localhost', 6969))
+tracker.bind(('196.42.74.94', 6969))
 
 files = {
 }

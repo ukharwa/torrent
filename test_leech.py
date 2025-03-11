@@ -4,7 +4,7 @@ from protocol import *
 
 udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-tracker_ip = "localhost"
+tracker_ip = "196.42.74.94"
 tracker_port = 6969
 
 protocol = Request()
