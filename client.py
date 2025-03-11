@@ -1,7 +1,7 @@
 import socket, json
 from src.peer import *
 from src.protocol import *
-from testgui import gui
+from gui.gui import gui
 
 udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 protocol = Request()
@@ -71,9 +71,17 @@ def leech(torrent_info, cache, response):
     tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     seeders = response["seeders"]
-
-    for s in seeders:
-        tcp_client.connect(s)
+    print(seeders[0])
+    
+    count = 1
+    while count <= 20:
+        print("Trying to connect to seeder... (" + str(count) + ")")
+        try:
+            tcp_client.connect(seeders[0])
+            break
+        except ConnectionRefusedError:
+            count += 1
+            continue
 
     pieces = torrent_info["pieces"]
 
@@ -98,7 +106,7 @@ def leech(torrent_info, cache, response):
         for p in file:
             new_file.write(p)
 
-    update_cache(torrent_info["file hash"], cache)
+    update_cache(torrent_info["info hash"], cache)
     
 
 def seed(torrent_info, cache, port):
@@ -120,7 +128,7 @@ def seed(torrent_info, cache, port):
     
     tcp_client.close()
 
-    update_cache(torrent_info["file hash"], cache)
+    update_cache(torrent_info["info hash"], cache)
 
 
 def main():
@@ -130,13 +138,12 @@ def main():
     
     cache = check_cache(torrent_info)
 
-    client_port = 9001
+    client_port = 9991
     
     downloaded = cache["downloaded"]
     uploaded = cache["uploaded"]
     left = cache["left"]
 
-    print(tuple(torrent_info["tracker"]))
     response = connect_to_tracker(tuple(torrent_info["tracker"]), torrent_info["info hash"], downloaded, uploaded, left, socket.gethostbyname(socket.gethostname()), client_port)
 
     if cache["left"] == 0:
