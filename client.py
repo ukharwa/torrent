@@ -1,7 +1,6 @@
 import socket, json
 from src.peer import generate_peerid
 from src.protocol import *
-from gui.gui import gui
 
 udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 protocol = Request()

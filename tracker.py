@@ -1,124 +1,156 @@
 import time
 import socket
 import threading
+import logging
 from src.protocol import *
 
-tracker = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-tracker_ip = socket.gethostbyname(socket.gethostname())
-tracker_port = 6969
-tracker.bind((tracker_ip, tracker_port))
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-files = {}
-connections = {}
-peers = {}
+class Tracker:
+    def __init__(self, ip="0.0.0.0", port=9999):
 
-protocol = Request()
-print("Tracker online")
-print(tracker_ip + " : " + "listening on port "  + str(tracker_port))
+        # Initialize tracker socket
+        self.tracker = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.tracker_ip = socket.gethostbyname(socket.gethostname()) if ip == "auto" else ip
+        self.tracker_port = port
+        self.tracker.bind((self.tracker_ip, self.tracker_port))
 
-def await_message():
-    while True:
-        data, addr = tracker.recvfrom(1024)
-        action = int.from_bytes(data[0:4], "little")
+        # Shared data structures with a lock for thread safety
+        self.files = {}       # {file_hash: {"seeders": set(), "leechers": set()}}
+        self.connections = {} # {connectionID: timestamp}
+        self.peers = {}       # {peerID: {file_hash: peer_info}}
 
-        if action == 0:
-            print("Connection request from " + addr[0] +  " receivied...")
-            connectionID = get_connectionID(addr[0])
-            connections[decode_connectionID(connectionID)] = time.time()
-            tracker.sendto(protocol.connection_response(connectionID), addr)
+        self.protocol = Request() # Initializes object for formatting messages
+        self.lock = threading.Lock() # Ensures thread safety when accessing shared resources
 
-        if action == 1:
-            print("Announcement received from " + addr[0])
-            response = protocol.tracker_decode(data)
-            connectionID = response["connectionID"]
+        logging.info(f"Tracker {self.tracker_ip} online. Listening on port {self.tracker_port}")
 
-            if decode_connectionID(connectionID) in connections:
-                print("connectionID found")
-                file = response["file_hash"]
-                peerID = response["peerID"]
 
-                if response["event"] == 0: # update
-                    peers[peerID][file] = peer_from_announce(response)
-                
-                if response["event"] == 1: #started
-                    if peerID not in peers:
-                        peers[peerID] = dict()
-                        peers[peerID][file] = peer_from_announce(response)
-                    else:
-                        peers[peerID][file] = peer_from_announce(response)
+    def await_message(self): # Listens for incoming messages to process
+        while True:
+            try:
+                data, addr = self.tracker.recvfrom(1024)
+                action = int.from_bytes(data[0:4], "little")
 
-                    
-                    if file not in files:
-                        files[file] = dict(seeders = set(), leechers = set())
-                    
-                    if response["left"] > 0:
-                        files[file]["leechers"].add(peerID)
-                    else:
-                        files[file]["seeders"].add(peerID)
-                    
-                    print(peers)
-                    seeders = []
-                    for s in files[file]["seeders"]:
-                        seeders.append(peers[s][file])
-                    tracker.sendto(protocol.announce_response(90, len(files[file]["leechers"]), seeders), addr)
-
-                elif response["event"] == 2: #stopped
-                    if response["left"] > 0:
-                        files[file]["leechers"].remove(peerID)
-                    else:
-                        files[file]["seeders"].remove(peerID)
-                    
-                    peers[peerID].pop(file)
-                    if len(peers[peerID]) == 0:
-                        peers.pop(peerID)
-
-            else:
-                print("Invalid connectionID received")
-                tracker.sendto(protocol.send_error("Invalid connectionID"), addr)
-
-def cleanup():
-    while True:
-        time.sleep(60)  # Run cleanup every 60 seconds
-        print("Running cleanup...")
-        
-        to_remove = []
-        for conn, t in connections.items():
-            if int(time.time()) - t > 900:
-                to_remove.append(conn)
-
-        for conn in to_remove:
-            connections.pop(conn, None)
-
-        peer_remove = []
-        for peer, files_dict in peers.items():
-            file_remove = []
-            for file, peer_info in files_dict.items():
-                if int(time.time()) - peer_info.announce_time() > 300:
-                    file_remove.append(file)
-
-            for file in file_remove:
-                if peers[peer][file].left > 0:
-                    files[file]["leechers"].remove(peer)
+                if action == 0:
+                    self.handle_connection_request(addr)
+                elif action == 1:
+                    self.handle_announcement(data, addr)
                 else:
-                    files[file]["seeders"].remove(peer)
+                    logging.warning(f"Received unknown action {action} from {addr}")
 
-                peers[peer].pop(file, None)
-                
-            if not peers[peer]:
-                peer_remove.append(peer)
+            except Exception as e:
+                logging.error(f"Error in await_message: {e}")
 
-        for peer in peer_remove:
-            peers.pop(peer, None)
 
-        print("Cleanup complete.")
+    def handle_connection_request(self, addr): # Processes connection requests
+        logging.info(f"Connection request from {addr[0]} received...")
+        connectionID = get_connectionID(addr[0])
+        with self.lock:
+            self.connections[decode_connectionID(connectionID)] = time.time()
+        self.tracker.sendto(self.protocol.connection_response(connectionID), addr)
 
-# Start both functions in separate threads
-thread1 = threading.Thread(target=await_message, daemon=True)
-thread2 = threading.Thread(target=cleanup, daemon=True)
 
-thread1.start()
-thread2.start()
+    def handle_announcement(self, data, addr): # Processes announcements
+        logging.info(f"Announcement received from {addr[0]}")
+        response = self.protocol.tracker_decode(data)
+        connectionID = response["connectionID"]
 
-# Keep the main program alive
-thread1.join()
-thread2.join()
+        with self.lock:
+            if decode_connectionID(connectionID) not in self.connections:
+                logging.warning(f"Invalid connectionID from {addr}")
+                self.tracker.sendto(self.protocol.send_error("Invalid connectionID"), addr)
+                return
+            
+            logging.info("Valid connectionID found")
+            file_hash = response["file_hash"]
+            peerID = response["peerID"]
+            event = response["event"]
+
+            if event == 0:  # Peer update
+                if peerID in self.peers:
+                    self.peers[peerID][file_hash] = peer_from_announce(response)
+
+            elif event == 1:  # Peer started
+                if peerID not in self.peers:
+                    self.peers[peerID] = {}
+                self.peers[peerID][file_hash] = peer_from_announce(response)
+
+                if file_hash not in self.files:
+                    self.files[file_hash] = {"seeders": set(), "leechers": set()}
+
+                if response["left"] > 0:
+                    self.files[file_hash]["leechers"].add(peerID)
+                else:
+                    self.files[file_hash]["seeders"].add(peerID)
+
+                logging.info(f"Updated peers: {self.peers}")
+
+                seeders = [self.peers[s][file_hash] for s in self.files[file_hash]["seeders"]]
+                self.tracker.sendto(self.protocol.announce_response(90, len(self.files[file_hash]["leechers"]), seeders), addr)
+
+            elif event == 2:  # Peer stopped
+                if peerID in self.peers and file_hash in self.peers[peerID]:
+                    if response["left"] > 0:
+                        self.files[file_hash]["leechers"].discard(peerID)
+                    else:
+                        self.files[file_hash]["seeders"].discard(peerID)
+
+                    self.peers[peerID].pop(file_hash, None)
+
+                    if not self.peers[peerID]:
+                        del self.peers[peerID]
+
+
+    def cleanup(self): # Cleans up old connectionID's and inactive peers every 60 seconds
+        while True:
+            time.sleep(60)  # Run cleanup every 60 seconds
+            logging.info("Running cleanup...")
+
+            with self.lock:
+                # Remove old connections
+                now = time.time()
+                expired_connections = [conn for conn, t in self.connections.items() if now - t > 900]
+                for conn in expired_connections:
+                    del self.connections[conn]
+
+                # Remove inactive peers
+                expired_peers = []
+                for peer, files_dict in self.peers.items():
+                    expired_files = []
+                    for file_hash, peer_info in files_dict.items():
+                        if now - peer_info.announce_time() > 300:
+                            expired_files.append(file_hash)
+
+                    for file_hash in expired_files:
+                        if self.peers[peer][file_hash].left > 0:
+                            self.files[file_hash]["leechers"].discard(peer)
+                        else:
+                            self.files[file_hash]["seeders"].discard(peer)
+
+                        del self.peers[peer][file_hash]
+
+                    if not self.peers[peer]:  # Remove empty peers
+                        expired_peers.append(peer)
+
+                for peer in expired_peers:
+                    del self.peers[peer]
+
+            logging.info("Cleanup complete.")
+
+
+    def run(self): # Runs the tracker. Uses multithreading
+        thread1 = threading.Thread(target=self.await_message, daemon=True)
+        thread2 = threading.Thread(target=self.cleanup, daemon=True)
+
+        thread1.start()
+        thread2.start()
+
+        thread1.join()
+        thread2.join()
+
+
+if __name__ == "__main__":
+    tracker = Tracker()
+    tracker.run()
