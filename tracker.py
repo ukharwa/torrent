@@ -1,9 +1,12 @@
 import time
 import socket
+import threading
 from src.protocol import *
 
 tracker = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-tracker.bind((socket.gethostbyname(socket.gethostname), 6969))
+tracker_ip = socket.gethostbyname(socket.gethostname())
+tracker_port = 6969
+tracker.bind((tracker_ip, tracker_port))
 
 files = {}
 connections = {}
@@ -11,6 +14,7 @@ peers = {}
 
 protocol = Request()
 print("Tracker online")
+print(tracker_ip + " : " + "listening on port "  + str(tracker_port))
 
 def await_message():
     while True:
@@ -38,7 +42,8 @@ def await_message():
                 
                 if response["event"] == 1: #started
                     if peerID not in peers:
-                        peers[peerID] = dict(file = peer_from_announce(response))
+                        peers[peerID] = dict()
+                        peers[peerID][file] = peer_from_announce(response)
                     else:
                         peers[peerID][file] = peer_from_announce(response)
 
@@ -51,10 +56,11 @@ def await_message():
                     else:
                         files[file]["seeders"].add(peerID)
                     
+                    print(peers)
                     seeders = []
-                    for s in file[files]["seeders"]:
-                        seeders.append(protocol.peer_to_bytes(peers[s][file]))
-                    tracker.sendto(protocol.announce_response(90, len(files[file]["seeders"], seeders)))
+                    for s in files[file]["seeders"]:
+                        seeders.append(peers[s][file])
+                    tracker.sendto(protocol.announce_response(90, len(files[file]["leechers"]), seeders), addr)
 
                 elif response["event"] == 2: #stopped
                     if response["left"] > 0:
@@ -71,19 +77,48 @@ def await_message():
                 tracker.sendto(protocol.send_error("Invalid connectionID"), addr)
 
 def cleanup():
-    for conn, t in connections:
-        if (time.time()).__trunc__() - t > 900:
-            connections.pop(conn)
+    while True:
+        time.sleep(60)  # Run cleanup every 60 seconds
+        print("Running cleanup...")
+        
+        to_remove = []
+        for conn, t in connections.items():
+            if int(time.time()) - t > 900:
+                to_remove.append(conn)
 
-    for peer in peers:
-        for file in peer.values():
-            if (time.time()).__trunc__() - file.announce_time() > 300:
-                if file.left > 0:
+        for conn in to_remove:
+            connections.pop(conn, None)
+
+        peer_remove = []
+        for peer, files_dict in peers.items():
+            file_remove = []
+            for file, peer_info in files_dict.items():
+                if int(time.time()) - peer_info.announce_time() > 300:
+                    file_remove.append(file)
+
+            for file in file_remove:
+                if peers[peer][file].left > 0:
                     files[file]["leechers"].remove(peer)
                 else:
                     files[file]["seeders"].remove(peer)
-                    
-                peers[peer].pop(file)
-                if len(peers[peer]) == 0:
-                    peers.pop(peer)
 
+                peers[peer].pop(file, None)
+                
+            if not peers[peer]:
+                peer_remove.append(peer)
+
+        for peer in peer_remove:
+            peers.pop(peer, None)
+
+        print("Cleanup complete.")
+
+# Start both functions in separate threads
+thread1 = threading.Thread(target=await_message, daemon=True)
+thread2 = threading.Thread(target=cleanup, daemon=True)
+
+thread1.start()
+thread2.start()
+
+# Keep the main program alive
+thread1.join()
+thread2.join()
