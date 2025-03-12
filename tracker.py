@@ -21,7 +21,7 @@ class Tracker:
         self.connections = {} # {connectionID: timestamp}
         self.peers = {}       # {peerID: {file_hash: peer_info}}
 
-        self.protocol = Request() # Initializes object for formatting messages
+        self.protocol = Protocol() # Initializes object for formatting messages
         self.lock = threading.Lock() # Ensures thread safety when accessing shared resources
 
         logging.info(f"Tracker {self.tracker_ip} online. Listening on port {self.tracker_port}")

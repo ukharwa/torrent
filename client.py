@@ -3,7 +3,7 @@ from src.peer import generate_peerid
 from src.protocol import *
 
 udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-protocol = Request()
+protocol = Protocol()
 
 def read_torrent_file(filename):
     with open(filename,"r") as torrent_file:
