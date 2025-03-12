@@ -1,5 +1,5 @@
 import socket, json
-from src.peer import *
+from src.peer import generate_peerid
 from src.protocol import *
 from gui.gui import gui
 
@@ -133,7 +133,7 @@ def seed(torrent_info, cache, port):
 
 def main():
 
-    torrent_file = gui()
+    torrent_file = input("Enter .ppp file name: ")
     torrent_info = read_torrent_file(torrent_file)
     
     cache = check_cache(torrent_info)

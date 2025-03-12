@@ -5,9 +5,9 @@ from src.protocol import *
 tracker = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 tracker.bind(('196.42.74.94', 6969))
 
-files = {
-}
-connections = {} 
+files = {}
+connections = {}
+peers = {}
 
 protocol = Request()
 print("Tracker online")
@@ -31,25 +31,40 @@ def await_message():
             if decode_connectionID(connectionID) in connections:
                 print("connectionID found")
                 file = response["file_hash"]
+                peerID = response["peerID"]
 
-                if response["event"] == 1:
-                    peer = peer_from_announce(response)
-
-                    if response["left"] > 0:
-                        if file in files:
-                            files[file]["leechers"][response["peerID"]] = peer
-                        else:
-                            tracker.sendto(protocol.send_error("No seeders for this file"), addr)
-                            continue
+                if response["event"] == 0: # update
+                    peers[peerID][file] = peer_from_announce(response)
+                
+                if response["event"] == 1: #started
+                    if peerID not in peers:
+                        peers[peerID] = dict(file = peer_from_announce(response))
                     else:
-                        if file in files:
-                             files[file]["seeders"][response["peerID"]] = peer
-                        else:
-                            files[file] = dict(seeders = {response["peerID"] : peer}, leechers = {})
-                    print("Peer " + response["peerID"] + " connected")
-                    tracker.sendto(protocol.announce_response(300, len(files[file]["leechers"]), len(files[file]["seeders"]), list(files[file]["seeders"].values())), addr)
-                if response["event"] == 2:
+                        peers[peerID][file] = peer_from_announce(response)
 
+                    
+                    if file not in files:
+                        files[file] = dict(seeders = set(), leechers = set())
+                    
+                    if response["left"] > 0:
+                        files[file]["leechers"].add(peerID)
+                    else:
+                        files[file]["seeders"].add(peerID)
+                    
+                    seeders = []
+                    for s in file[files]["seeders"]:
+                        seeders.append(protocol.peer_to_bytes(peers[s][file]))
+                    tracker.sendto(protocol.announce_response(90, len(files[file]["seeders"], seeders)))
+
+                elif response["event"] == 2: #stopped
+                    if response["left"] > 0:
+                        files[file]["leechers"].remove(peerID)
+                    else:
+                        files[file]["seeders"].remove(peerID)
+                    
+                    peers[peerID].pop(file)
+                    if len(peers[peerID]) == 0:
+                        peers.pop(peerID)
 
             else:
                 print("Invalid connectionID received")
@@ -60,4 +75,15 @@ def cleanup():
         if (time.time()).__trunc__() - t > 900:
             connections.pop(conn)
 
+    for peer in peers:
+        for file in peer.values():
+            if (time.time()).__trunc__() - file.announce_time() > 300:
+                if file.left > 0:
+                    files[file]["leechers"].remove(peer)
+                else:
+                    files[file]["seeders"].remove(peer)
+                    
+                peers[peer].pop(file)
+                if len(peers[peer]) == 0:
+                    peers.pop(peer)
 

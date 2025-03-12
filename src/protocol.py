@@ -35,7 +35,8 @@ class Request:
         data[108:110] = port.to_bytes(2, 'little')            #connection port
         return data
 
-    def announce_response(self, interval, num_leechers, num_seeders, seeders):#response to the leecher
+    def announce_response(self, interval, num_leechers, seeders):#response to the leecher
+        num_seeders = len(seeders)
         data = bytearray(20 + 6*num_seeders)
         action = 1
         data[0:4] = action.to_bytes(4, 'little')
