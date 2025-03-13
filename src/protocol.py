@@ -162,14 +162,16 @@ def peer_from_bytes(data): # Convert a 6-byte array into an IP string and port t
 def getpackets(filename, packet_size):
     # Read a file and break it into packets of a given size.
     # Each packet is keyed by its SHA-256 hash.
-    packets = {}
+    packets = []
+    i = 0
     with open(filename, "rb") as file:
         while (piece := file.read(packet_size)):
-            data = bytearray(4 + len(piece))
+            data = bytearray(8 + len(piece))
             data[0:4] = len(piece).to_bytes(4, 'little')
-            data[4:] = piece
-            hash_key = hashlib.sha256(piece).hexdigest()
-            packets[hash_key] = data
+            data[4:8] = i.to_bytes(4, 'little')
+            data[8:] = piece
+            packets[i] = data
+            i += 1
     return packets
 
 
