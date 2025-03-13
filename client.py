@@ -1,155 +1,178 @@
-import socket, json
+
+import socket, json, threading
 from src.peer import generate_peerid
 from src.protocol import *
 
-udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-protocol = Protocol()
 
-def read_torrent_file(filename):
-    with open(filename,"r") as torrent_file:
-        data = json.load(torrent_file)
-    return data
+class Client():
+    def __init__(self, port=9001, sk="hello"):
+        self.udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.protocol = Protocol()
+        self.ip = socket.gethostbyname(socket.gethostname())
+        self.port = port
+        self.peerID = generate_peerid(self.ip, sk)
 
- 
-def check_cache(torrent_info):
-    try:
-        with open("cache/."+torrent_info["info hash"], "r") as file:
-            data = json.load(file)
-        return data
-    except FileNotFoundError:
-        data = {
-            "file path": "downloads/"+torrent_info["file name"],
-            "downloaded": 0,
-            "uploaded": 0,
-            "left": torrent_info["file size"],
-            "pieces": len(torrent_info["pieces"])
-        }
-
-        with open("cache/."+torrent_info["info hash"], "w") as file:
-            json.dump(data, file, indent=4)  # Write JSON data with pretty formatting
-        
+    def read_torrent_file(self, filename):
+        with open(filename,"r") as torrent_file:
+            data = json.load(torrent_file)
         return data
 
+     
+    def check_cache(self):
+        try:
+            with open("cache/." + self.torrent_info["info hash"], "r") as file:
+                data = json.load(file)
+            self.cache = data 
+        except FileNotFoundError:
+            data = {
+                "file path": "downloads/"+ self.torrent_info["file name"],
+                "downloaded": 0,
+                "uploaded": 0,
+                "left": self.torrent_info["file size"],
+                "pieces": len(self.torrent_info["pieces"])
+            }
 
-def update_cache(cache_name, data):
-    with open("cache/."+cache_name, "w") as file:
-            json.dump(data, file, indent=4)
+            with open("cache/."+self.torrent_info["info hash"], "w") as file:
+                json.dump(data, file, indent=4)  # Write JSON data with pretty formatting
+            
+            self.cache = data
 
 
-def connect_to_tracker(tracker, file_hash, downloaded, uploaded, left, ip, port):
-    while True:
+    def update_cache(self):
+        with open("cache/."+self.torrent_info["info hash"], "w") as file:
+                json.dump(self.cache, file, indent=4)
+
+
+    def update_tracker(self, tracker, event):
+        attempts = 0
+        while attempts < 5:
+            print("Joining swarm...")
+
+            announce = self.protocol.announce_request(self.connectionID, self.torrent_info["info hash"], self.peerID, self.cache["downloaded"], self.cache["uploaded"], self.cache["left"], event, self.ip, self.port)
+            self.udp_client.sendto(announce, tracker)
+
+            data, _ = self.udp_client.recvfrom(1024)
+            action = int.from_bytes(data[0:4], 'little') 
+            response = self.protocol.client_decode(data)
+
+            if action == 1:
+                return response
+            if action == 99:
+                print("ERROR: " + response["ERROR"])
+                attempts += 1
+                print(f"Retrying connection (attempt {attempts}/5)...")
+                self.connectionID = self.connect_to_tracker(tracker)
+                continue  # Try again
+            else:
+                return None
+
+    def connect_to_tracker(self, tracker):
         print("Searching for tracker...")
-        udp_client.sendto(protocol.connection_request(), tracker)
-        data, _ = udp_client.recvfrom(12)
+        self.udp_client.sendto(self.protocol.connection_request(), tracker)
+        data, _ = self.udp_client.recvfrom(12)
         action = int.from_bytes(data[0:4], 'little')
+        response = self.protocol.client_decode(data)
 
         if action == 0:
             print("Tracker found")
-            response = protocol.client_decode(data)
-            connectionID = response["connectionID"]
+            return response["connectionID"]
+           
 
-            print("Attempting connection...")
-            announce = protocol.announce_request(connectionID, file_hash, generate_peerid(ip, "Hello"), downloaded, uploaded, left, 1, ip, port)
-            udp_client.sendto(announce, tracker)
+    def leech(self, response):
+        tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-            data, _ = udp_client.recvfrom(1024)
-            response = protocol.client_decode(data)
-            action = int.from_bytes(data[0:4], 'little')       
-            
-            if action == 99:
-                print("ERROR: " + response["ERROR"])
-
-            if action == 1:
-                print("Successfully connected to tracker...")
-                print(response)
-                break
-    return response
-
-
-def leech(torrent_info, cache, response):
-    tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    seeders = response["seeders"]
-    print(seeders[0])
-    
-    count = 1
-    while count <= 20:
-        print("Trying to connect to seeder... (" + str(count) + ")")
-        try:
-            tcp_client.connect(seeders[0])
-            break
-        except ConnectionRefusedError:
-            count += 1
-            continue
-
-    pieces = torrent_info["pieces"]
-
-    file = []
-
-    for p in pieces:
-        tcp_client.send(bytes.fromhex(p))
+        seeders = response["seeders"]
+        print(seeders[0])
         
-        piece_size = tcp_client.recv(4)
-        piece = recv_all(tcp_client, int.from_bytes(piece_size, "little"))
+        count = 1
+        while count <= 20:
+            print(f"Trying to connect to seeder... ({count})")
+            try:
+                tcp_client.connect(seeders[0])
+                break
+            except ConnectionRefusedError:
+                count += 1
+                continue
 
-        if hashlib.sha256(piece).hexdigest() == p:
-            print("packet received")
-            file.append(piece)
-            cache["left"] -= len(piece)
-            cache["downloaded"] += len(piece)
+        pieces = self.torrent_info["pieces"]
+
+        file = []
+
+        for p in pieces:
+            tcp_client.send(bytes.fromhex(p))
             
-    
-    tcp_client.send(b"\xff")
+            piece_size = tcp_client.recv(4)
+            piece = recv_all(tcp_client, int.from_bytes(piece_size, "little"))
 
-    with open(cache["file path"], "wb") as new_file:
-        for p in file:
-            new_file.write(p)
+            if hashlib.sha256(piece).hexdigest() == p:
+                print("packet received")
+                file.append(piece)
+                self.cache["left"] -= len(piece)
+                self.cache["downloaded"] += len(piece)
+                
+        
+        tcp_client.send(b"\xff")
 
-    update_cache(torrent_info["info hash"], cache)
-    
+        with open(self.cache["file path"], "wb") as new_file:
+            for p in file:
+                new_file.write(p)
 
-def seed(torrent_info, cache, port):
-    tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    tcp_client.bind((socket.gethostbyname(socket.gethostname()),port))
-    tcp_client.listen()
+        self.update_cache()
+        
 
-    packets = getpackets(cache["file path"], torrent_info["piece length"])
+    def seed(self):
+        tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcp_server.bind((socket.gethostbyname(socket.gethostname()), self.port))
+        tcp_server.listen()
 
-    conn, _ = tcp_client.accept()
+        packets = getpackets(self.cache["file path"], self.torrent_info["piece length"])
 
-    while True:
-        piece_hash = conn.recv(32).hex()
-        if piece_hash == "ff":
-            print("breaking")
-            break
-        conn.sendall(packets[piece_hash])
-        cache["uploaded"] += len(packets[piece_hash] - 4)
-    
-    tcp_client.close()
+        print("Seeding: waiting for peer connection...")
+        conn, addr = tcp_server.accept()
+        print(f"Peer connected from {addr}")
 
-    update_cache(torrent_info["info hash"], cache)
+        while True:
+            piece_hash_data = conn.recv(32)
+            # Check if seeder should stop
+            if piece_hash_data.hex() == "ff":
+                print("Seeder received termination signal.")
+                break
+
+            piece_hash = piece_hash_data.hex()
+            if piece_hash in packets:
+                # Corrected: subtract 4 from the length of the packet data (header excluded)
+                conn.sendall(packets[piece_hash])
+                self.cache["uploaded"] += len(packets[piece_hash]) - 4
+            else:
+                print(f"Requested piece {piece_hash} not found.")
+        conn.close()
+        tcp_server.close()
+
+        self.update_cache()
+        print("Seeding complete and cache updated.")
 
 
-def main():
+    def run(self, filename):
+        self.torrent_info = self.read_torrent_file(filename)
+        
+        self.check_cache()
+        
+        tracker = tuple(self.torrent_info["tracker"])
 
-    torrent_file = input("Enter .ppp file name: ")
-    torrent_info = read_torrent_file(torrent_file)
-    
-    cache = check_cache(torrent_info)
+        self.connectionID = self.connect_to_tracker(tracker)
+        response = self.update_tracker(tracker, 1)
 
-    client_port = 9991
-    
-    downloaded = cache["downloaded"]
-    uploaded = cache["uploaded"]
-    left = cache["left"]
+        if response:
+            self.update_interval = response["interval"]
+            if self.cache["left"] == 0:
+                print("Seeding...")
+                self.seed()
+            else:
+                print("Leeching")
+                self.leech(response)
+        else:
+            print("Could not establish connection to tracker")
 
-    response = connect_to_tracker(tuple(torrent_info["tracker"]), torrent_info["info hash"], downloaded, uploaded, left, socket.gethostbyname(socket.gethostname()), client_port)
+client = Client()
+client.run("image69.ppp")
 
-    if cache["left"] == 0:
-        print("Seeding...")
-        seed(torrent_info, cache, 9001)
-    else:
-        print("Leeching")
-        leech(torrent_info, cache, response)
-
-main()
