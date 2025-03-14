@@ -170,7 +170,7 @@ def getpackets(filename, packet_size):
             data[0:4] = len(piece).to_bytes(4, 'little')
             data[4:8] = i.to_bytes(4, 'little')
             data[8:] = piece
-            packets[i] = data
+            packets.append(data)
             i += 1
     return packets
 

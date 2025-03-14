@@ -120,7 +120,7 @@ class Tracker:
                 for peer, files_dict in self.peers.items():
                     expired_files = []
                     for file_hash, peer_info in files_dict.items():
-                        if now - peer_info.announce_time() > 300:
+                        if now - peer_info.announce_time > 300:
                             expired_files.append(file_hash)
 
                     for file_hash in expired_files:
@@ -134,9 +134,11 @@ class Tracker:
                     if not self.peers[peer]:  # Remove empty peers
                         expired_peers.append(peer)
 
+                logging.info("Expired peers: " + str(expired_peers))
                 for peer in expired_peers:
-                    del self.peers[peer]
 
+                    del self.peers[peer]
+            
             logging.info("Cleanup complete.")
 
 

@@ -29,7 +29,7 @@ class Client():
                 "downloaded": 0,
                 "uploaded": 0,
                 "left": self.torrent_info["file size"],
-                "pieces": [0]  * len(self.torrent_info["pieces"])
+                "pieces": [0] * len(self.torrent_info["pieces"])
             }
 
             with open("cache/."+self.torrent_info["info hash"], "w") as file:
@@ -82,7 +82,6 @@ class Client():
         tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         seeders = response["seeders"]
-        print(seeders[0])
         
         count = 1
         while count <= 20:
@@ -97,20 +96,23 @@ class Client():
         pieces = self.cache["pieces"]
         hashes = self.torrent_info["pieces"]
 
-        file = []
+        file = [0] * len(pieces)
 
         for i in range(0, len(pieces)):
-            tcp_client.send(pieces[i].to_bytes(1, 'little'))
+            print(f"Requesting piece {i}")
+            tcp_client.send(i.to_bytes(1, 'little'))
             
             piece_size = int.from_bytes(tcp_client.recv(4), "little")
             piece_index = int.from_bytes(tcp_client.recv(4), 'little')
             piece = recv_all(tcp_client, piece_size)
 
             if hashlib.sha256(piece).hexdigest() == hashes[i]:
-                print("packet received")
-                file[piece_index]
+                print(f"Piece {i} received")
+                file[piece_index] = piece
                 self.cache["left"] -= len(piece)
                 self.cache["downloaded"] += len(piece)
+            else:
+                print("Incorrect Hash")
                 
         
         tcp_client.send(b"\xff")
@@ -127,26 +129,26 @@ class Client():
         tcp_server.bind((socket.gethostbyname(socket.gethostname()), self.port))
         tcp_server.listen()
 
-        packets = getpackets(self.cache["file path"], self.torrent_info["piece length"])
+        pieces = getpackets(self.cache["file path"], self.torrent_info["piece length"])
 
         print("Seeding: waiting for peer connection...")
         conn, addr = tcp_server.accept()
         print(f"Peer connected from {addr}")
 
         while True:
-            piece_hash_data = conn.recv(32)
+            piece_data = conn.recv(32)
             # Check if seeder should stop
-            if piece_hash_data.hex() == "ff":
+            if piece_data.hex() == "ff":
                 print("Seeder received termination signal.")
                 break
 
-            piece_hash = piece_hash_data.hex()
-            if piece_hash in packets:
+            piece_index = int.from_bytes(piece_data, 'little')
+            if piece_index in range(0, len(pieces)):
                 # Corrected: subtract 4 from the length of the packet data (header excluded)
-                conn.sendall(packets[piece_hash])
-                self.cache["uploaded"] += len(packets[piece_hash]) - 4
+                conn.sendall(pieces[piece_index])
+                self.cache["uploaded"] += len(pieces[piece_index]) - 4
             else:
-                print(f"Requested piece {piece_hash} not found.")
+                print(f"Requested piece {piece_index} not found.")
         conn.close()
         tcp_server.close()
 
@@ -167,7 +169,7 @@ class Client():
         if response:
             self.update_interval = response["interval"]
             if self.cache["left"] == 0:
-                print("Seeding...")
+                print("Seeding " + self.torrent_info["file name"] + "...")
                 self.seed()
             else:
                 print("Leeching")
@@ -176,5 +178,5 @@ class Client():
             print("Could not establish connection to tracker")
 
 client = Client()
-client.run("image69.ppp")
+client.run(input("Enter .ppp file: "))
 
