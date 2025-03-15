@@ -1,0 +1,25 @@
+{
+    "tracker": [
+        "192.168.79.254",
+        9999
+    ],
+    "file name": "image420.jpg",
+    "info hash": "3b322a3c5d395779f92e59ad146edb6baef798aefd57a75cef3706273f9c15db",
+    "file size": 6380599,
+    "piece length": 524288,
+    "pieces": [
+        "aa8dcc3c81c623fbcd52473a918895d8d3cf381b4c6a1e77e126e860991da464",
+        "07d5d4bd864bd01b6c64b25775475675583a0c0817ad36d1cfa7e1ed61fdd013",
+        "80828502888827f18e641f7a44f0a768dcc1ab3a8bb52a180248c62acd94461f",
+        "e788b1be18ba21e3d0972e7fb566cd8a1a4d054cb294aed57daf8653b688efa5",
+        "59e9c456ee203c239e689d006e1efd0aa08d4b54b31a5992f3659d74e0f2e64c",
+        "ae840efb237f5a8d950fa73e2634712f44773f91ab28141a0e98bc7d9b618814",
+        "fc4d9d0338b73754e4a66eea9657224fda341780ede9c65cb8c28ff4b371a6aa",
+        "588e7493c735dfd73ae5a85029d9eca61a7571caea8c8406e2e3e0192023e0ce",
+        "6c3bc9aa8e1f5c11081f82ee515d6f39eaff50a93f7f8a5a05b0da44d19de4ba",
+        "d7566c66ced09be4df5e298b9dbae3131437a4fd3fc394468263c05c552bb58d",
+        "2ce0b2e6f86ca8c94a1822db80c5db97f59cfa3076b7738ed67735c248aad198",
+        "e1e2a60d04a96a68a0aff9ccb5c886619038705bec1435f2b6e53bbfb88cad97",
+        "cce15c6ee0e74f0bef33c892867ed8c6c465fabbc1df5dc25391a8d30e84c331"
+    ]
+}
