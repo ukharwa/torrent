@@ -126,6 +126,8 @@ class Client():
                 else:
                     print(f"Incorrect hash for piece {piece_index}")
 
+                tcp_client.send(b"\xff")
+
                 tcp_client.close()
 
             except ConnectionRefusedError:

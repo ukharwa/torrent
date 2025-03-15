@@ -68,11 +68,11 @@ class Tracker:
             peerID = response["peerID"]
             event = response["event"]
 
-            if event == 0:  # Peer update
+            if event == 0:  # peer update
                 if peerID in self.peers:
                     self.peers[peerID][file_hash] = peer_from_announce(response)
 
-            elif event == 1:  # Peer started
+            elif event == 1:  # peer started
                 if peerID not in self.peers:
                     self.peers[peerID] = {}
                 self.peers[peerID][file_hash] = peer_from_announce(response)
@@ -90,7 +90,7 @@ class Tracker:
                 seeders = [self.peers[s][file_hash] for s in self.files[file_hash]["seeders"]]
                 self.tracker.sendto(self.protocol.announce_response(90, len(self.files[file_hash]["leechers"]), seeders), addr)
 
-            elif event == 2:  # Peer stopped
+            elif event == 2:  # peer stopped
                 if peerID in self.peers and file_hash in self.peers[peerID]:
                     if response["left"] > 0:
                         self.files[file_hash]["leechers"].discard(peerID)
@@ -103,19 +103,19 @@ class Tracker:
                         del self.peers[peerID]
 
 
-    def cleanup(self): # Cleans up old connectionID's and inactive peers every 60 seconds
+    def cleanup(self): # clean up old connectionIDs and inactive peers
         while True:
-            time.sleep(60)  # Run cleanup every 60 seconds
+            time.sleep(60)  # run cleanup every 60 seconds
             logging.info("Running cleanup...")
 
             with self.lock:
-                # Remove old connections
+                # remove old connections
                 now = time.time()
                 expired_connections = [conn for conn, t in self.connections.items() if now - t > 900]
                 for conn in expired_connections:
                     del self.connections[conn]
 
-                # Remove inactive peers
+                # remove inactive peers
                 expired_peers = []
                 for peer, files_dict in self.peers.items():
                     expired_files = []
@@ -131,7 +131,7 @@ class Tracker:
 
                         del self.peers[peer][file_hash]
 
-                    if not self.peers[peer]:  # Remove empty peers
+                    if not self.peers[peer]:  # remove empty peers
                         expired_peers.append(peer)
 
                 logging.info("Expired peers: " + str(expired_peers))
@@ -142,7 +142,7 @@ class Tracker:
             logging.info("Cleanup complete.")
 
 
-    def run(self): # Runs the tracker. Uses multithreading
+    def run(self): # runs tracker using multithreading
         thread1 = threading.Thread(target=self.await_message, daemon=True)
         thread2 = threading.Thread(target=self.cleanup, daemon=True)
 
@@ -154,5 +154,5 @@ class Tracker:
 
 
 if __name__ == "__main__":
-    tracker = Tracker(ip="localhost")
+    tracker = Tracker(ip="192.168.79.254")
     tracker.run()
