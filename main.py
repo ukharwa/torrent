@@ -2,7 +2,7 @@ from pathlib import Path
 from tkinter import Tk, Canvas, Button, Text, Scrollbar,Label, filedialog,ttk
 import tkinter as tk
 from client import Client
-import threading
+import threading, logging
 # list of torrent rows
 
 class Row:
@@ -25,10 +25,25 @@ class Row:
     def update(self):
         self.progress_bar["value"] = self.process.get_percentage() * 100
 
+class TextHandler(logging.Handler):
+    def __init__(self, text_widget):
+        super().__init__()
+        self.text_widget = text_widget
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.text_widget.after(0, self.append, msg + "\n")
+
+    def append(self, msg):
+        self.text_widget.insert(tk.END, msg)
+        self.text_widget.see(tk.END)
+
 port = 9001
 
 def main():
     torrent_rows = []
+
+    
     
 
     # add the torrent row
@@ -47,7 +62,7 @@ def main():
         log_text.insert(tk.END, f"Selected file: {file_path}\n")    #logging file path
         log_text.see(tk.END)  # scroll
         global port
-        process = Client(filename, port)
+        process = Client(filename, logger, port)
         port += 1
         threading.Thread(target=process.run, daemon=True).start()
         row = add_torrent_row(process)
@@ -113,15 +128,14 @@ def main():
     )
     select_button.place(x=x_start, y=y_position, width=button_width, height=button_height)
 
-    # Upload Button
-    upload_button = Button(
-        text="Upload",
-        font=("Trebuchet MS", 12),
-        borderwidth=0,
-        highlightthickness=0,
-        command=open_file,
-        relief="flat"
-    )
+    logger = logging.getLogger()  
+    logger.setLevel(logging.INFO)  # Set your logging level
+
+    text_handler = TextHandler(log_text)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    text_handler.setFormatter(formatter)
+
+    logger.addHandler(text_handler)
 
     window.after(10, update_progress)
     window.resizable(False, False)

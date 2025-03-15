@@ -3,9 +3,8 @@ import socket, json, threading, os
 from src.peer import generate_peerid
 from src.protocol import *
 
-
 class Client():
-    def __init__(self, filename, port=9001, sk="hello"):
+    def __init__(self, filename, logger, port=9001, sk="hello"):
         self.torrent_info = self.read_torrent_file(filename)
         self.check_cache()
         self.udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -14,6 +13,7 @@ class Client():
         self.port = port
         self.peerID = generate_peerid(self.ip, sk)
         self.lock = threading.Lock()
+        self.logger = logger
 
     def read_torrent_file(self, filename):
         with open(filename,"r") as torrent_file:
@@ -49,7 +49,7 @@ class Client():
     def join_swarm(self, tracker):
         attempts = 0
         while attempts < 5:
-            print("Joining swarm...")
+            self.logger.info("Joining swarm...")
 
             announce = self.protocol.announce_request(self.connectionID, self.torrent_info["info hash"], self.peerID, self.cache["downloaded"], self.cache["uploaded"], self.cache["left"], 1, self.ip, self.port)
             self.udp_client.sendto(announce, tracker)
@@ -61,9 +61,9 @@ class Client():
             if action == 1:
                 return response
             if action == 99:
-                print("ERROR: " + response["ERROR"])
+                self.logger.info("ERROR: " + response["ERROR"])
                 attempts += 1
-                print(f"Retrying connection (attempt {attempts}/5)...")
+                self.logger.info(f"Retrying connection (attempt {attempts}/5)...")
                 self.connectionID = self.connect_to_tracker(tracker)
                 continue  # Try again
             else:
@@ -72,7 +72,7 @@ class Client():
     def update_tracker(self, tracker):
         while True:
             time.sleep(self.update_interval)
-            print("Updating tracker...")
+            self.logger.info("Updating tracker...")
 
             announce = self.protocol.announce_request(self.connectionID, self.torrent_info["info hash"], self.peerID, self.cache["downloaded"], self.cache["uploaded"], self.cache["left"], 0, self.ip, self.port)
             self.udp_client.sendto(announce, tracker)
@@ -88,14 +88,14 @@ class Client():
                 return None
 
     def connect_to_tracker(self, tracker):
-        print("Searching for tracker...")
+        self.logger.info("Searching for tracker...")
         self.udp_client.sendto(self.protocol.connection_request(), tracker)
         data, _ = self.udp_client.recvfrom(12)
         action = int.from_bytes(data[0:4], 'little')
         response = self.protocol.client_decode(data)
 
         if action == 0:
-            print("Tracker found")
+            self.logger.info("Tracker found")
             return response["connectionID"]
 
 
@@ -103,7 +103,7 @@ class Client():
             try:
                 tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 tcp_client.connect(seeder)
-                print(f"Connected to {seeder} for piece {piece_index}")
+                self.logger.info(f"Connected to {seeder} for piece {piece_index}")
 
                 tcp_client.send(piece_index.to_bytes(1, 'little'))
 
@@ -113,7 +113,7 @@ class Client():
                 piece = recv_all(tcp_client, piece_size)
 
                 if hashlib.sha256(piece).hexdigest() == self.torrent_info["pieces"][piece_index]:
-                    print(f"Piece {piece_index} received")
+                    self.logger.info(f"Piece {piece_index} received")
                     offset = piece_index * self.torrent_info["piece length"]
 
                     with self.lock:
@@ -126,21 +126,21 @@ class Client():
                         self.cache["pieces"][received_index] = 1
 
                 else:
-                    print(f"Incorrect hash for piece {piece_index}")
+                    self.logger.info(f"Incorrect hash for piece {piece_index}")
 
                 tcp_client.send(b"\xff")
 
                 tcp_client.close()
 
             except ConnectionRefusedError:
-                print(f"Failed to connect to {seeder}")
+                self.logger.info(f"Failed to connect to {seeder}")
 
     def leech(self, response):
 
         seeders = response["seeders"]
 
         if not seeders:
-            print("No seeders available")
+            self.logger.info("No seeders available")
             return
 
         if not os.path.exists(self.cache["file path"]):
@@ -163,7 +163,7 @@ class Client():
 
         # Save the downloaded file
         self.update_cache()
-        print("Download complete!")
+        self.logger.info("Download complete!")
 
 
     def seed(self):
@@ -172,31 +172,31 @@ class Client():
         tcp_server.listen()
 
         pieces = getpackets(self.cache["file path"], self.torrent_info["piece length"])
-        print("Seeding " + self.torrent_info["file name"] + "...")
+        self.logger.info("Seeding " + self.torrent_info["file name"] + "...")
         while True:
-            print("Seeding: waiting for peer connection...")
+            self.logger.info("Seeding: waiting for peer connection...")
             conn, addr = tcp_server.accept()
-            print(f"Peer connected from {addr}")
+            self.logger.info(f"Peer connected from {addr}")
 
             while True:
                 piece_data = conn.recv(32)
                 # Check if seeder should stop
                 if piece_data.hex() == "ff":
-                    print("Seeder received termination signal.")
+                    self.logger.info("Seeder received termination signal.")
                     break
                 piece_index = int.from_bytes(piece_data, 'little')
-                print(f"Request for piece {piece_index}")
+                self.logger.info(f"Request for piece {piece_index}")
                 if piece_index in range(0, len(pieces)):
                     # Corrected: subtract 4 from the length of the packet data (header excluded)
                     conn.sendall(pieces[piece_index])
-                    print("Piece sent")
+                    self.logger.info("Piece sent")
                     self.cache["uploaded"] += len(pieces[piece_index]) - 4
                 else:
-                    print(f"Requested piece {piece_index} not found.")
+                    self.logger.info(f"Requested piece {piece_index} not found.")
             conn.close()
 
             self.update_cache()
-            print("Seeding complete and cache updated.")
+            self.logger.info("Seeding complete and cache updated.")
 
     def run(self):
         tracker = tuple(self.torrent_info["tracker"])
@@ -216,7 +216,7 @@ class Client():
                 leech_thread = threading.Thread(target= lambda: self.leech(response))
                 threads.append(leech_thread)
         else:
-            print("Could not establish connection to tracker")
+            self.logger.info("Could not establish connection to tracker")
             return
         
         for thread in threads:
