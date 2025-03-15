@@ -9,202 +9,286 @@ from pathlib import Path
 
 # from tkinter import *
 # Explicit imports to satisfy Flake8
-from tkinter import Label, Tk, Canvas, Entry, Text, Button, PhotoImage, filedialog
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, filedialog, ttk
+import os
 import tkinter as tk
+from datetime import datetime
 
-
-
+# System assets paths
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path("assets")
 
-def gui():
-    def relative_to_assets(path: str) -> Path:
-        return ASSETS_PATH / Path(path)
+def relative_to_assets(path: str) -> Path:
+    return ASSETS_PATH / Path(path)
 
-    def open_file():
-            global file_path
-            file_path = tk.filedialog.askopenfilename(title="Select A File", filetypes=(("PPP Files", "*.ppp"),))
+def open_file():
+        global file_path
+        file_path = tk.filedialog.askopenfilename(title="Select A File", filetypes=(("PPP Files", "*.ppp"),))
 
-    # File selection button
-    def file_selection_button_clicked():
-        print("aosdhuflasdkflajk")
-        file_path = open_file()
-        print(file_path)
-        
-    # Upload button
-    def upload_button_clicked():
-        print("upload button clicked")
-
-
-    #Cancel button
-    def cancel_button_clicked():
-        print("cancel button clicked")
-        
-
-    # Button hover
-    def button_1_hover(e):
-        button_1.config(
-            image=button_image_hover_1
-        )
-    def button_1_leave(e):
-        button_1.config(
-            image=button_image_1
-        )
+# File selection button
+def file_selection_button_clicked():
+    print("aosdhuflasdkflajk")
+    file_path = open_file()
+    print(file_path)
+    
+    # display the files selected
+    displaySelectedFles(file_path)
+    
+# Upload button
+def upload_button_clicked():
+    print("upload button clicked")
 
 
-    window = Tk()
+#Cancel button
+def cancel_button_clicked():
+    print("cancel button clicked")
+    
 
-    window.geometry("800x500")
-    window.configure(bg = "#FFFFFF")
-
-
-    canvas = Canvas(
-        window,
-        bg = "#FFFFFF",
-        height = 500,
-        width = 800,
-        bd = 0,
-        highlightthickness = 0,
-        relief = "ridge"
+# Button hover
+def button_1_hover(e):
+    button_1.config(
+        image=button_image_hover_1
     )
-
-    canvas.place(x = 0, y = 0)
-    canvas.create_rectangle(
-        0.0,
-        0.0,
-        800.0,
-        71.0,
-        fill="#3E355A",
-        outline="")
-
-    canvas.create_text(
-        15.0,
-        16.0,
-        anchor="nw",
-        text="PP Protocol",
-        fill="#FFFFFF",
-        font=("Inter Bold", 32 * -1)
-    )
-
-    canvas.create_text(
-        698.0,
-        46.0,
-        anchor="nw",
-        text="SEEDER",
-        fill="#FFFFFF",
-        font=("Inter Bold", 20 * -1)
-    )
-
-    canvas.create_rectangle(
-        0.0,
-        296.0,
-        800.0,
-        500.0,
-        fill="#95909A",
-        outline="")
-
-    canvas.create_text(
-        4.0,
-        302.0,
-        anchor="nw",
-        text="Logs:",
-        fill="#000000",
-        font=("Inter Bold", 12 * -1)
-    )
-
-    button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
-    button_1 = Button(
-        image=button_image_1,
-        borderwidth=0,
-        highlightthickness=0,
-        command= open_file,
-        relief="flat"
-    )
-    button_1.place(
-        x=0.0,
-        y=250.0,
-        width=131.0,
-        height=46.0
-    )
-
-    button_image_hover_1 = PhotoImage(
-        file=relative_to_assets("button_hover_1.png"))
-
-
-    button_1.bind('<Enter>', button_1_hover)
-    button_1.bind('<Leave>', button_1_leave)
-
-
-
-
-
-    # PLace the button in the frame - integrating the icon with the actual button
-
-    upload_button_image = PhotoImage(file=relative_to_assets("button_2.png"))
-    upload_button = canvas.create_image(164.0, 251.0, image=upload_button_image, anchor=tk.NW)
-    upload_image = PhotoImage(file=relative_to_assets("image_2.png"))
-
-    upload_icon = canvas.create_image(210.0, 251.0, image=upload_image, anchor=tk.NW)
-
-    canvas.tag_bind(upload_button, '<Button-1>', lambda e: upload_button_clicked())
-    canvas.tag_bind(upload_icon, '<Button-1>', lambda e: upload_button_clicked())
-
-
-        
-    # PLace the button in the frame - integrating the icon with the actual button
-    cancel_button_image = PhotoImage(file=relative_to_assets("button_3.png"))
-    cancel_button = canvas.create_image(324.0, 251.0, image=cancel_button_image, anchor=tk.NW)
-    cancel_image = PhotoImage(file=relative_to_assets("image_1.png"))
-
-    cancel_icon = canvas.create_image(370.0, 251.0, image=cancel_image, anchor=tk.NW)
-
-    canvas.tag_bind(cancel_button, '<Button-1>', lambda e: cancel_button_clicked())
-    canvas.tag_bind(cancel_icon, '<Button-1>', lambda e: cancel_button_clicked())
-
-
-
-
-    entry_image_1 = PhotoImage(
-        file=relative_to_assets("entry_1.png"))
-    entry_bg_1 = canvas.create_image(
-        405.0,
-        405.5,
-        image=entry_image_1
-    )
-    entry_1 = Text(
-        bd=0,
-        bg="#D9D9D9",
-        fg="#000716",
-        highlightthickness=0
-    )
-    entry_1.place(
-        x=32.0,
-        y=321.0,
-        width=746.0,
-        height=167.0
-    )
-
-    entry_image_2 = PhotoImage(
-        file=relative_to_assets("entry_2.png"))
-    entry_bg_2 = canvas.create_image(
-        395.5,
-        109.5,
-        image=entry_image_2
-    )
-    entry_2 = Text(
-        bd=0,
-        bg="#D9D9D9",
-        fg="#000716",
-        highlightthickness=0
-    )
-    entry_2.place(
-        x=18.0,
-        y=90.0,
-        width=755.0,
-        height=37.0
+def button_1_leave(e):
+    button_1.config(
+        image=button_image_1
     )
 
 
-    window.resizable(False, False)
-    window.mainloop()
-    return file_path
+# funcion for the TreeView to display the selected files
+def displaySelectedFles(selectedFiles):
+    # clear the tree view
+    for file in treeView.get_children():
+       treeView.delete(file)
+       
+    # update the number of files selected
+    fileCounts.config(text=f"{len(selectedFiles)} files is selected.")
+    
+    # display the files selected to the tree view
+    for file in selectedFiles:
+        # the file properties
+        name = os.path.basename(file)
+        type = os.path.splitext(file)[1]
+        modTime = os.path.getmtime(file)
+        modDate = datetime.fromtimestamp(modTime).strftime("%Y-%m-%d %H:%M:%S")
+        size = os.path.getsize(file)
+
+        # 1st Parameter - parent node, 2nd Parameter - appends to end of list, 3rd Parameter - values
+        treeView.insert("", "end", values=(name, type, modDate, size))
+
+
+
+
+
+# frame of the app
+window = Tk()
+
+window.geometry("800x500")
+window.configure(bg = "#FFFFFF")
+
+# Frame
+canvas = Canvas(
+    window,
+    bg = "#FFFFFF",
+    height = 500,
+    width = 800,
+    bd = 0,
+    highlightthickness = 0,
+    relief = "ridge"
+)
+
+canvas.place(x = 0, y = 0)
+canvas.create_rectangle(
+    0.0,
+    0.0,
+    800.0,
+    71.0,
+    fill="#3E355A",
+    outline="")
+
+canvas.create_text(
+    15.0,
+    16.0,
+    anchor="nw",
+    text="PP Protocol",
+    fill="#FFFFFF",
+    font=("Inter Bold", 32 * -1)
+)
+
+canvas.create_text(
+    698.0,
+    46.0,
+    anchor="nw",
+    text="SEEDER",
+    fill="#FFFFFF",
+    font=("Inter Bold", 20 * -1)
+)
+
+canvas.create_rectangle(
+    0.0,
+    296.0,
+    800.0,
+    500.0,
+    fill="#95909A",
+    outline="")
+
+canvas.create_text(
+    4.0,
+    302.0,
+    anchor="nw",
+    text="Logs:",
+    fill="#000000",
+    font=("Inter Bold", 12 * -1)
+)
+
+button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
+button_1 = Button(
+    image=button_image_1,
+    borderwidth=0,
+    highlightthickness=0,
+    command= open_file,
+    relief="flat"
+)
+button_1.place(
+    x=0.0,
+    y=250.0,
+    width=131.0,
+    height=46.0
+)
+
+button_image_hover_1 = PhotoImage(
+    file=relative_to_assets("button_hover_1.png"))
+
+
+button_1.bind('<Enter>', button_1_hover)
+button_1.bind('<Leave>', button_1_leave)
+
+
+
+
+
+# PLace the button in the frame - integrating the icon with the actual button
+
+upload_button_image = PhotoImage(file=relative_to_assets("button_2.png"))
+upload_button = canvas.create_image(164.0, 251.0, image=upload_button_image, anchor=tk.NW)
+upload_image = PhotoImage(file=relative_to_assets("image_2.png"))
+
+upload_icon = canvas.create_image(210.0, 251.0, image=upload_image, anchor=tk.NW)
+
+canvas.tag_bind(upload_button, '<Button-1>', lambda e: upload_button_clicked())
+canvas.tag_bind(upload_icon, '<Button-1>', lambda e: upload_button_clicked())
+
+
+    
+# PLace the button in the frame - integrating the icon with the actual button
+cancel_button_image = PhotoImage(file=relative_to_assets("button_3.png"))
+cancel_button = canvas.create_image(324.0, 251.0, image=cancel_button_image, anchor=tk.NW)
+cancel_image = PhotoImage(file=relative_to_assets("image_1.png"))
+
+cancel_icon = canvas.create_image(370.0, 251.0, image=cancel_image, anchor=tk.NW)
+
+canvas.tag_bind(cancel_button, '<Button-1>', lambda e: cancel_button_clicked())
+canvas.tag_bind(cancel_icon, '<Button-1>', lambda e: cancel_button_clicked())
+
+
+
+
+entry_image_1 = PhotoImage(
+    file=relative_to_assets("entry_1.png"))
+entry_bg_1 = canvas.create_image(
+    405.0,
+    405.5,
+    image=entry_image_1
+)
+entry_1 = Text(
+    bd=0,
+    bg="#D9D9D9",
+    fg="#000716",
+    highlightthickness=0
+)
+entry_1.place(
+    x=32.0,
+    y=321.0,
+    width=746.0,
+    height=167.0
+)
+
+entry_image_2 = PhotoImage(
+    file=relative_to_assets("entry_2.png"))
+entry_bg_2 = canvas.create_image(
+    395.5,
+    109.5,
+    image=entry_image_2
+)
+entry_2 = Text(
+    bd=0,
+    bg="#D9D9D9",
+    fg="#000716",
+    highlightthickness=0
+)
+entry_2.place(
+    x=18.0,
+    y=90.0,
+    width=755.0,
+    height=37.0
+)
+
+
+# the file dialog to display the files being selected
+dialogFrame = tk.Frame(window)
+dialogFrame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+# show the number of files being displayed
+fileCounts = tk.Label(dialogFrame, text="No file is selected", font=("Inter Bold", 12))
+fileCounts.pack(anchor="w", pady=(0, 5))
+
+# create the scroll bar if display overlaps the screen
+# X-axis
+scrollbarX = tk.Scrollbar(dialogFrame, orient=tk.HORIZONTAL)
+scrollbarX.pack(side=tk.BOTTOM, fill=tk.X)
+# Y-axis
+scrollbarY = tk.Scrollbar(dialogFrame)
+scrollbarY.pack(side=tk.RIGHT, fill=tk.Y)
+
+# Create the column and list view for the files - listing the details of the files
+treeView = ttk.Treeview(dialogFrame, columns=("NAME", "TYPE", "MODIFIED DATE", "SIZE"), show="headings", yscrollcommand=scrollbarY.set, xscrollcommand=scrollbarX.set)
+# apply the commands to the scroll bar actions
+scrollbarX.config(command=treeView.xview)
+scrollbarY.config(command=treeView.yview)
+
+# Columns
+treeView.column("NAME", width=200, anchor="center")
+treeView.column("TYPE", width=100, anchor="center")
+treeView.column("MODIFIED DATE", width=200, anchor="center")
+treeView.column("SIZE", width=100, anchor="center")
+
+treeView.heading("NAME", text="Name")
+treeView.heading("TYPE", text="Type")
+treeView.heading("MODIFIED DATE", text="Modified Date")
+treeView.heading("SIZE", text="Size (in bytes))")
+
+
+treeView.pack(fill=tk.BOTH, expand=True)
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+window.resizable(False, False)
+window.mainloop()
+
