@@ -25,10 +25,11 @@ class Row:
     def update(self):
         self.progress_bar["value"] = self.process.get_percentage() * 100
 
+port = 9001
 
 def main():
     torrent_rows = []
-    port = 9001
+    
 
     # add the torrent row
     def add_torrent_row(process):
