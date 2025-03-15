@@ -171,7 +171,6 @@ class Client():
         tcp_server.bind((socket.gethostbyname(socket.gethostname()), self.port))
         tcp_server.listen()
 
-        pieces = getpackets(self.cache["file path"], self.torrent_info["piece length"])
         self.logger.info("Seeding " + self.torrent_info["file name"] + "...")
         while True:
             self.logger.info("Seeding: waiting for peer connection...")
@@ -186,13 +185,12 @@ class Client():
                     break
                 piece_index = int.from_bytes(piece_data, 'little')
                 self.logger.info(f"Request for piece {piece_index}")
-                if piece_index in range(0, len(pieces)):
-                    # Corrected: subtract 4 from the length of the packet data (header excluded)
-                    conn.sendall(pieces[piece_index])
-                    self.logger.info("Piece sent")
-                    self.cache["uploaded"] += len(pieces[piece_index]) - 4
-                else:
-                    self.logger.info(f"Requested piece {piece_index} not found.")
+                # Corrected: subtract 4 from the length of the packet data (header excluded)
+                piece = get_packets(self.cache["file path"], piece_index, self.torrent_info["piece size"])
+                conn.sendall(piece)
+                self.logger.info("Piece sent")
+                self.cache["uploaded"] += int.from_bytes(piece[1:4], "little") - 4
+
             conn.close()
 
             self.update_cache()

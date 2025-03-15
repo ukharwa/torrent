@@ -159,14 +159,14 @@ def peer_from_bytes(data): # Convert a 6-byte array into an IP string and port t
     return ip, port
 
 
-def get_packets(filename, index,  packet_size):
+def getpackets(filename, index,  packet_size):
     # Read a file and break it into packets of a given size.
     offset = index * packet_size
     with open(filename, "r+b") as file:
         file.seek(offset)
         packet = file.read(packet_size)
         data = bytearray(8 + packet_size)
-        data[0:4] = len(packet).to_bytes(4, 'little')
+        data[0:4] = packet_size.to_bytes(4, 'little')
         data[4:8] = index.to_bytes(4, 'little')
         data[8:] =  packet
     return data
