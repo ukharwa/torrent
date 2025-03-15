@@ -225,7 +225,9 @@ class Client():
         if response:
             self.update_interval = response["interval"]
             update_thread = threading.Thread(target=lambda: self.update_tracker(tracker))
+            save_thread = threading.Thread(target=self.save_cache)
             threads.append(update_thread)
+            threads.append(save_thread)
             if self.cache["left"] == 0:
                 seed_thread = threading.Thread(target=self.seed)
                 threads.append(seed_thread)
@@ -239,6 +241,11 @@ class Client():
         for thread in threads:
             thread.start()
     
+    def save_cache(self):
+        time.sleep(5)
+        self.update_cache()
+        self.logger.info("Updating cache file")
+
     def get_name(self):
         return self.torrent_info["file name"]
     
@@ -248,4 +255,4 @@ class Client():
         return "Leeching..."
 
     def get_percentage(self):
-        return self.cache["downloaded"] // self.torrent_info["file size"]
+        return self.cache["downloaded"] / self.torrent_info["file size"]
