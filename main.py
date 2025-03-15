@@ -1,12 +1,13 @@
 from pathlib import Path
 from tkinter import Tk, Canvas, Button, Text, Scrollbar,Label, filedialog,ttk
 import tkinter as tk
-import client
+from client import Client
 import socket
 # list of torrent rows
 torrent_rows = []
 
 def main():
+    cl = Client()
     global log_text    
     # add the torrent row
     def add_torrent_row(filename, status):
@@ -38,15 +39,15 @@ def main():
         log_text.insert(tk.END, f"Selected file: {file_path}\n")    #logging file path
         log_text.see(tk.END)  # scroll
 
-        torrent_info = client.read_torrent_file(file_path)          #reading the file contents
-        cache = client.check_cache(torrent_info)                    #checking if peer has this file cached if not they are leeching else they seeding
+        torrent_info = cl.read_torrent_file(file_path)          #reading the file contents
+        cache = cl.check_cache(torrent_info)                    #checking if peer has this file cached if not they are leeching else they seeding
         client_port = 9991
 
         downloaded = cache["downloaded"]
         uploaded = cache["uploaded"]
         left = cache["left"]
 
-        response = client.connect_to_tracker(              #sending connection resquest to tracker
+        response = cl.connect_to_tracker(              #sending connection resquest to tracker
             tuple(torrent_info["tracker"]),
             torrent_info["info hash"],
             downloaded, uploaded, left,
@@ -58,11 +59,11 @@ def main():
         if cache["left"] == 0:                          #if the peer has nothing left to download then it is assumed they are seeding
             log_text.insert(tk.END, "Seeding...\n")
             status = "Seeding"
-            client.seed(torrent_info, cache, 9001)
+            cl.seed(torrent_info, cache, 9001)
         else:                                           #if the peer still has missing pieces then they leech
             log_text.insert(tk.END, "Leeching...\n")
             status = "Leeching"
-            client.leech(torrent_info, cache, response)
+            cl.leech(torrent_info, cache, response)
 
         add_torrent_row(filename, status)
         

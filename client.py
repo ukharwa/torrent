@@ -163,6 +163,8 @@ class Client():
         self.update_cache()
         print("Download complete!")
 
+        self.seed(self.torrent_info["file name"])
+
 
     def seed(self):
         tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -224,8 +226,3 @@ class Client():
         
         for thread in threads:
             thread.start()
-
-
-client = Client()
-client.run(input("Enter .ppp file: "))
-
