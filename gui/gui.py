@@ -23,8 +23,10 @@ def relative_to_assets(path: str) -> Path:
 
 def open_file():
         global file_path
-        file_path = tk.filedialog.askopenfilename(title="Select A File", filetypes=(("PPP Files", "*.ppp"),))
-
+        file_path = tk.filedialog.askopenfilenames(title="Select Files", filetypes=(("", ""),))
+        if file_path:
+            displaySelectedFiles(file_path)
+    
 # File selection button
 def file_selection_button_clicked():
     print("aosdhuflasdkflajk")
@@ -32,7 +34,7 @@ def file_selection_button_clicked():
     print(file_path)
     
     # display the files selected
-    displaySelectedFles(file_path)
+    displaySelectedFiles(file_path)
     
 # Upload button
 def upload_button_clicked():
@@ -56,7 +58,7 @@ def button_1_leave(e):
 
 
 # funcion for the TreeView to display the selected files
-def displaySelectedFles(selectedFiles):
+def displaySelectedFiles(selectedFiles):
     # clear the tree view
     for file in treeView.get_children():
        treeView.delete(file)
@@ -236,7 +238,7 @@ entry_2.place(
 
 # the file dialog to display the files being selected
 dialogFrame = tk.Frame(window)
-dialogFrame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+dialogFrame.place(x=0, y=150, width=800, height=100)
 
 # show the number of files being displayed
 fileCounts = tk.Label(dialogFrame, text="No file is selected", font=("Inter Bold", 12))
@@ -271,19 +273,9 @@ treeView.heading("SIZE", text="Size (in bytes))")
 treeView.pack(fill=tk.BOTH, expand=True)
 
     
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Progress bar
+progress_bar = ttk.Progressbar(window, orient="horizontal", length=800, mode="determinate")
+progress_bar.place(x=0, y=71, width=800, height=20)
 
 
 
