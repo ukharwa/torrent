@@ -3,6 +3,8 @@ from tkinter import Tk, Canvas, Button, Text, Scrollbar,Label, filedialog,ttk
 import tkinter as tk
 from client import Client
 import threading, logging
+from src.create_cache import create_cache
+from src.generate_torrent import filetotorrent
 # list of torrent rows
 
 class Row:
@@ -53,11 +55,19 @@ def main():
         return row  # Store row elements
 
     def open_file():
-        file_path = filedialog.askopenfilename(title="Select A File", filetypes=(("PPP Files", "*.ppp"),))
-        filename= file_path.split("/")[-1]
+        file_path = filedialog.askopenfilename(title="Select A File", filetypes=(("All Files", "*.*"),))
 
         if not file_path:
             return  # If no file is selected, do nothing
+
+        filename= file_path.split("/")[-1]
+        if filename.split(".")[-1] != "ppp":
+            filetotorrent(file_path, 512, "192.168.79.121", 9999)
+            filename = filename.split(".")[0] + ".ppp"
+            create_cache(filename)
+            
+
+        
         
         log_text.insert(tk.END, f"Selected file: {file_path}\n")    #logging file path
         log_text.see(tk.END)  # scroll
@@ -68,8 +78,6 @@ def main():
         row = add_torrent_row(process)
         row.place()
         torrent_rows.append(row)
-        
-        log_text.see(tk.END)  # Auto-scroll
     
     def update_progress():
         for process in torrent_rows:

@@ -1,5 +1,6 @@
 import hashlib
 import json
+import base64
 
 def generate_packet_hashes(filename, packet_size):
 
@@ -7,7 +8,7 @@ def generate_packet_hashes(filename, packet_size):
 
     with open(filename, "rb") as file:
         while packet := file.read(packet_size):
-            packets.append(hashlib.sha256(packet).hexdigest())
+            packets.append(base64.b64encode(hashlib.sha256(packet).digest()))
     file.close()
     
     return packets
@@ -25,7 +26,7 @@ def generate_torrent_data(filename, piece_size, tracker_ip, tracker_port):
 
     torrent_data =  {
         "tracker": (tracker_ip, tracker_port),
-        "file name": filename.split("/")[-1],
+        "file name": filename.split("\\")[-1],
         "info hash": info_hash,
         "file size": file_size,
         "piece length": piece_size,
@@ -43,12 +44,4 @@ def filetotorrent(filename, piece_size, tracker_ip, tracker_port):            #r
     with open(torrent_filename, "w") as torrent_file:
         json.dump(torrent_data, torrent_file, indent=4)  # Write JSON data with pretty formatting
         
-
-
-filename = input("Enter file name: ")
-piece_size = int(input("Enter piece size (kb): ")) * 1024
-tracker_ip = input("Enter tracker ip: ")
-tracker_port = int(input("Enter tracker port: "))
-
-filetotorrent(filename, piece_size, tracker_ip, tracker_port)
     
