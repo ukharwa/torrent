@@ -1,5 +1,5 @@
 
-import socket, json, threading, os
+import socket, json, threading, os, base64
 from src.peer import generate_peerid
 from src.protocol import *
 
@@ -99,34 +99,43 @@ class Client():
             return response["connectionID"]
 
 
-    def request_piece(self, seeder, piece_index):
+    def request_piece(self, seeder, piece_list):
             try:
+                counter = 0
+                index = 0
                 tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 tcp_client.connect(seeder)
-                self.logger.info(f"Connected to {seeder} for piece {piece_index}")
+                while len(piece_list) > 0:
+                    if counter == 3:
+                        counter = 0
+                        index += 1
+                    piece_index = piece_list[index]
+                    self.logger.info(f"Connected to {seeder} for piece {piece_index}")
 
-                tcp_client.send(piece_index.to_bytes(1, 'little'))
+                    tcp_client.send(piece_index.to_bytes(4, 'little'))
 
-                piece_size = int.from_bytes(recv_all(tcp_client, 4), "little")
-                received_index = int.from_bytes(recv_all(tcp_client, 4), "little")
+                    piece_size = int.from_bytes(recv_all(tcp_client, 4), "little")
+                    received_index = int.from_bytes(recv_all(tcp_client, 4), "little")
 
-                piece = recv_all(tcp_client, piece_size)
+                    piece = recv_all(tcp_client, piece_size)
 
-                if hashlib.sha256(piece).hexdigest() == self.torrent_info["pieces"][piece_index]:
-                    self.logger.info(f"Piece {piece_index} received")
-                    offset = piece_index * self.torrent_info["piece length"]
+                    if base64.b64encode(hashlib.sha256(piece).digest()).decode("utf-8") == self.torrent_info["pieces"][piece_index]:
+                        self.logger.info(f"Piece {piece_index} received")
+                        offset = piece_index * self.torrent_info["piece length"]
 
-                    with self.lock:
-                        with open(self.cache["file path"], "r+b") as f:
-                            f.seek(offset)
-                            f.write(piece) 
+                        with self.lock:
+                            with open(self.cache["file path"], "r+b") as f:
+                                f.seek(offset)
+                                f.write(piece) 
 
-                        self.cache["left"] -= len(piece)
-                        self.cache["downloaded"] += len(piece)
-                        self.cache["pieces"][received_index] = 1
+                            self.cache["left"] -= len(piece)
+                            self.cache["downloaded"] += len(piece)
+                            self.cache["pieces"][received_index] = 1
+                            piece_list.pop(0)
 
-                else:
-                    self.logger.info(f"Incorrect hash for piece {piece_index}")
+                    else:
+                        self.logger.info(f"Incorrect hash for piece {piece_index}")
+                        counter += 1
 
                 tcp_client.send(b"\xff")
 
@@ -148,18 +157,28 @@ class Client():
                 f.truncate(self.torrent_info["file size"])
 
         threads = []
-        piece_indices = [i for i, have_piece in enumerate(self.cache["pieces"]) if have_piece == 0]
+        
+        missing_pieces = [i for i, has_piece in enumerate(self.cache["pieces"]) if has_piece == 0]
 
-        # Distribute piece requests among available seeders
-        for i, piece_index in enumerate(piece_indices):
-            seeder = seeders[i % len(seeders)]  # Round-robin seeders
-            thread = threading.Thread(target=lambda: self.request_piece(seeder, piece_index))
+        # Distribute pieces among seeders (round-robin)
+        seeder_pieces = {seeder: [] for seeder in seeders}
+        seeder_count = len(seeders)
+        for i, piece_index in enumerate(missing_pieces):
+            seeder = seeders[i % seeder_count]  # Manually cycle through seeders
+            seeder_pieces[seeder].append(piece_index)
+
+        # Start one thread per seeder
+        threads = []
+        for seeder, piece_list in seeder_pieces.items():
+            thread = threading.Thread(target=self.request_piece, args=(seeder, piece_list))
             thread.start()
             threads.append(thread)
 
         # Wait for all threads to finish
         for thread in threads:
             thread.join()
+
+
 
         # Save the downloaded file
         self.update_cache()
@@ -178,7 +197,7 @@ class Client():
             self.logger.info(f"Peer connected from {addr}")
 
             while True:
-                piece_data = conn.recv(32)
+                piece_data = recv_all(conn, 4)
                 # Check if seeder should stop
                 if piece_data.hex() == "ff":
                     self.logger.info("Seeder received termination signal.")
