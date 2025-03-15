@@ -105,10 +105,10 @@ class Client():
 
                 tcp_client.send(piece_index.to_bytes(1, 'little'))
 
-                piece_size = int.from_bytes(tcp_client.recv(4), "little")
-                received_index = int.from_bytes(tcp_client.recv(4), "little")
+                piece_size = int.from_bytes(recv_all(tcp_client, 4), "little")
+                received_index = int.from_bytes(recv_all(tcp_client, 4), "little")
 
-                piece = tcp_client.recv(piece_size)
+                piece = recv_all(tcp_client, piece_size)
 
                 if hashlib.sha256(piece).hexdigest() == self.torrent_info["pieces"][piece_index]:
                     print(f"Piece {piece_index} received")
