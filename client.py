@@ -226,3 +226,6 @@ class Client():
         
         for thread in threads:
             thread.start()
+    
+    def get_percentage(self):
+        return self.cache["downloaded"] // self.torrent_info["file size"]
