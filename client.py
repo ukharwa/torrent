@@ -186,7 +186,7 @@ class Client():
                 piece_index = int.from_bytes(piece_data, 'little')
                 self.logger.info(f"Request for piece {piece_index}")
                 # Corrected: subtract 4 from the length of the packet data (header excluded)
-                piece = get_packets(self.cache["file path"], piece_index, self.torrent_info["piece size"])
+                piece = get_packets(self.cache["file path"], piece_index, self.torrent_info["piece length"])
                 conn.sendall(piece)
                 self.logger.info("Piece sent")
                 self.cache["uploaded"] += int.from_bytes(piece[1:4], "little") - 4

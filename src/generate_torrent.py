@@ -8,7 +8,7 @@ def generate_packet_hashes(filename, packet_size):
 
     with open(filename, "rb") as file:
         while packet := file.read(packet_size):
-            packets.append(base64.b64encode(hashlib.sha256(packet).digest()))
+            packets.append(base64.b64encode(hashlib.sha256(packet).digest()).decode("utf-8"))
     file.close()
     
     return packets

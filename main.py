@@ -62,7 +62,7 @@ def main():
 
         filename= file_path.split("/")[-1]
         if filename.split(".")[-1] != "ppp":
-            filetotorrent(file_path, 512, "192.168.79.121", 9999)
+            filetotorrent(file_path, 2048, "192.168.79.129", 9999)
             filename = filename.split(".")[0] + ".ppp"
             create_cache(filename)
             
