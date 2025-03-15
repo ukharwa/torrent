@@ -2,31 +2,37 @@ from pathlib import Path
 from tkinter import Tk, Canvas, Button, Text, Scrollbar,Label, filedialog,ttk
 import tkinter as tk
 from client import Client
-import socket
+import threading
 # list of torrent rows
-torrent_rows = []
+
+class Row:
+    def __init__(self, process, window, index):
+        self.process = process
+        self.window = window
+        self.row_y = 80 + index * 30  # adjust Y position for new row
+        self.name = process.get_name()
+        self.status = process.get_status()
+        self.filename_label = Label(window, text=self.name.split("/")[-1], font=("Arial", 12), anchor="w", width=30)
+        self.status_label = Label(window, text=self.status, font=("Arial", 12), fg="green" if self.status == "Seeding..." else "red")
+        self.progress_bar = ttk.Progressbar(window, orient="horizontal", length=200, mode="determinate")
+
+    
+    def place(self):
+        self.filename_label.place(x=20, y=self.row_y)
+        self.status_label.place(x=300, y=self.row_y)
+        self.progress_bar.place(x=420, y=self.row_y)
+    
+    def update(self):
+        self.progress_bar["value"] = self.process.get_percentage()
 
 def main():
-    cl = Client()
-    global log_text    
+    torrent_rows = []
+
     # add the torrent row
-    def add_torrent_row(filename, status):
-        # adds row with filename, status, and progress bar
-        row_y = 80 + len(torrent_rows) * 30  # adjust Y position for new row
+    def add_torrent_row(process):
+        row = Row(process, window, len(torrent_rows))
 
-        filename_label = Label(window, text=filename.split("/")[-1], font=("Arial", 12), anchor="w", width=30)
-        filename_label.place(x=20, y=row_y)
-
-        status_label = Label(window, text=status, font=("Arial", 12), fg="green" if status == "Seeding" else "red")
-        status_label.place(x=300, y=row_y)
-#########################################progress bar#####################################################################
-        progress = ttk.Progressbar(window, orient="horizontal", length=200, mode="determinate")
-        progress.place(x=420, y=row_y)
-        progress["value"] = 50  #######################################
-
-        torrent_rows.append((filename_label, status_label, progress))  # Store row elements
-
-
+        return row  # Store row elements
 
     def open_file():
         file_path = filedialog.askopenfilename(title="Select A File", filetypes=(("PPP Files", "*.ppp"),))
@@ -35,42 +41,22 @@ def main():
         if not file_path:
             return  # If no file is selected, do nothing
         
-
         log_text.insert(tk.END, f"Selected file: {file_path}\n")    #logging file path
         log_text.see(tk.END)  # scroll
 
-        torrent_info = cl.read_torrent_file(file_path)          #reading the file contents
-        cache = cl.check_cache(torrent_info)                    #checking if peer has this file cached if not they are leeching else they seeding
-        client_port = 9991
-
-        downloaded = cache["downloaded"]
-        uploaded = cache["uploaded"]
-        left = cache["left"]
-
-        response = cl.connect_to_tracker(              #sending connection resquest to tracker
-            tuple(torrent_info["tracker"]),
-            torrent_info["info hash"],
-            downloaded, uploaded, left,
-            socket.gethostbyname(socket.gethostname()), client_port, 
-            log_text
-        )
-
-
-        if cache["left"] == 0:                          #if the peer has nothing left to download then it is assumed they are seeding
-            log_text.insert(tk.END, "Seeding...\n")
-            status = "Seeding"
-            cl.seed(torrent_info, cache, 9001)
-        else:                                           #if the peer still has missing pieces then they leech
-            log_text.insert(tk.END, "Leeching...\n")
-            status = "Leeching"
-            cl.leech(torrent_info, cache, response)
-
-        add_torrent_row(filename, status)
+        process = Client(filename)
+        threading.Thread(target=process.run, daemon=True).start()
+        row = add_torrent_row(process)
+        row.place()
+        torrent_rows.append(row)
         
         log_text.see(tk.END)  # Auto-scroll
-
-            
-
+    
+    def update_progress():
+        for process in torrent_rows:
+            process.update()
+        window.after(100, update_progress)
+    
     window = Tk()
     window.geometry("800x600")
     window.configure(bg="#FFFFFF")
@@ -132,23 +118,9 @@ def main():
         command=open_file,
         relief="flat"
     )
-    upload_button.place(x=x_start + button_width + spacing, y=y_position, width=button_width, height=button_height)
 
-    add_torrent_row("/bruh.png", "leeching")
-    add_torrent_row("/bruh.png", "leeching")
-    add_torrent_row("/bruh.png", "leeching")
-    # Cancel Button
-    cancel_button = Button(
-        text="Cancel",
-        font=("Trebuchet MS", 12),
-        borderwidth=0,
-        highlightthickness=0,
-        command=open_file,
-        relief="flat"
-    )
-    cancel_button.place(x=x_start + 2 * (button_width + spacing), y=y_position, width=button_width, height=button_height)
-
+    window.after(100, update_progress)
     window.resizable(False, False)
     window.mainloop()
-
+    
 main()

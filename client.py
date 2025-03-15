@@ -5,7 +5,9 @@ from src.protocol import *
 
 
 class Client():
-    def __init__(self, port=9001, sk="hello"):
+    def __init__(self, filename, port=9001, sk="hello"):
+        self.torrent_info = self.read_torrent_file(filename)
+        self.check_cache()
         self.udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.protocol = Protocol()
         self.ip = socket.gethostbyname(socket.gethostname())
@@ -198,12 +200,7 @@ class Client():
             self.update_cache()
             print("Seeding complete and cache updated.")
 
-
-    def run(self, filename):
-        self.torrent_info = self.read_torrent_file(filename)
-        
-        self.check_cache()
-        
+    def run(self):
         tracker = tuple(self.torrent_info["tracker"])
 
         self.connectionID = self.connect_to_tracker(tracker)
@@ -227,5 +224,13 @@ class Client():
         for thread in threads:
             thread.start()
     
+    def get_name(self):
+        return self.torrent_info["file name"]
+    
+    def get_status(self):
+        if self.cache["left"] == 0:
+            return "Seeding..."
+        return "Leeching..."
+
     def get_percentage(self):
         return self.cache["downloaded"] // self.torrent_info["file size"]
