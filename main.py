@@ -23,7 +23,8 @@ class Row:
         self.progress_bar.place(x=420, y=self.row_y)
     
     def update(self):
-        self.progress_bar["value"] = self.process.get_percentage()
+        self.progress_bar["value"] = self.process.get_percentage() * 100
+
 
 def main():
     torrent_rows = []
@@ -55,7 +56,7 @@ def main():
     def update_progress():
         for process in torrent_rows:
             process.update()
-        window.after(100, update_progress)
+        window.after(10, update_progress)
     
     window = Tk()
     window.geometry("800x600")
@@ -119,7 +120,7 @@ def main():
         relief="flat"
     )
 
-    window.after(100, update_progress)
+    window.after(10, update_progress)
     window.resizable(False, False)
     window.mainloop()
     

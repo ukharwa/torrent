@@ -154,5 +154,5 @@ class Tracker:
 
 
 if __name__ == "__main__":
-    tracker = Tracker(ip="192.168.79.254")
+    tracker = Tracker(ip="192.168.79.121")
     tracker.run()
