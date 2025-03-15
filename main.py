@@ -28,9 +28,8 @@ class Row:
 
 def main():
     torrent_rows = []
-    global port
     port = 9001
-    
+
     # add the torrent row
     def add_torrent_row(process):
         row = Row(process, window, len(torrent_rows))
@@ -46,7 +45,7 @@ def main():
         
         log_text.insert(tk.END, f"Selected file: {file_path}\n")    #logging file path
         log_text.see(tk.END)  # scroll
-
+        global port
         process = Client(filename, port)
         port += 1
         threading.Thread(target=process.run, daemon=True).start()
