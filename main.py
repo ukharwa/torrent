@@ -1,7 +1,7 @@
-from pathlib import Path
+
 from tkinter import Tk, Canvas, Button, Text, Scrollbar,Label, filedialog,ttk
 import tkinter as tk
-from client import Client
+from src.client import Client
 import threading, logging
 from src.create_cache import create_cache
 from src.generate_torrent import filetotorrent
@@ -13,9 +13,9 @@ class Row:
         self.window = window
         self.row_y = 80 + index * 30  # adjust Y position for new row
         self.name = process.get_name()
-        self.status = process.get_status()
         self.filename_label = Label(window, text=self.name.split("/")[-1], font=("Arial", 12), anchor="w", width=30)
-        self.status_label = Label(window, text=self.status, font=("Arial", 12), fg="green" if self.status == "Seeding..." else "red")
+        self.status_label = Label(window,  font=("Arial", 12), )
+        self.update_status()
         self.progress_bar = ttk.Progressbar(window, orient="horizontal", length=200, mode="determinate")
 
     
@@ -24,8 +24,22 @@ class Row:
         self.status_label.place(x=300, y=self.row_y)
         self.progress_bar.place(x=420, y=self.row_y)
     
-    def update(self):
+    def progress(self):
         self.progress_bar["value"] = self.process.get_percentage() * 100
+        if self.process.get_status() == 0:
+            self.status = "Seeding..."
+        else:
+            self.status = "Leeching..."
+
+    def update_status(self):
+        self.status = self.process.get_status()
+        self.status_label.config(text="Seeding..." if self.status == 0 else "Leeching...")
+        self.status_label.config(fg="green" if self.status == 0 else "red")
+
+    def update(self):
+        self.progress()
+        self.update_status()
+
 
 class TextHandler(logging.Handler):
     def __init__(self, text_widget):
@@ -43,14 +57,11 @@ class TextHandler(logging.Handler):
 port = 9001
 
 def main():
-    torrent_rows = []
-
-    
-    
+    processes = []
 
     # add the torrent row
     def add_torrent_row(process):
-        row = Row(process, window, len(torrent_rows))
+        row = Row(process, window, len(processes))
 
         return row  # Store row elements
 
@@ -61,14 +72,15 @@ def main():
             return  # If no file is selected, do nothing
 
         filename= file_path.split("/")[-1]
-        if filename.split(".")[-1] != "ppp":
-            filetotorrent(file_path, 2048, "192.168.79.129", 9999)
-            filename = filename.split(".")[0] + ".ppp"
-            create_cache(filename)
-            
 
-        
-        
+        if filename.split(".")[-1] != "ppp":
+            def new_torrent(filename):
+                filetotorrent(file_path, 2048, "192.168.79.129", 9999)
+                filename = filename.split(".")[0] + ".ppp"
+                create_cache(filename)
+            logger.info("Generating torrent (.ppp) file for requested file")
+            threading.Thread(target=new_torrent, args=(filename,), daemon=True).start()
+
         log_text.insert(tk.END, f"Selected file: {file_path}\n")    #logging file path
         log_text.see(tk.END)  # scroll
         global port
@@ -77,10 +89,10 @@ def main():
         threading.Thread(target=process.run, daemon=True).start()
         row = add_torrent_row(process)
         row.place()
-        torrent_rows.append(row)
+        processes.append(row)
     
     def update_progress():
-        for process in torrent_rows:
+        for process in processes:
             process.update()
         window.after(10, update_progress)
     
@@ -121,7 +133,6 @@ def main():
     # Button Styling
     button_width = 131
     button_height = 46
-    spacing = 10  # space between buttons
     x_start = 10  # start position for first button
     y_position = 240  # y position for all buttons
 
