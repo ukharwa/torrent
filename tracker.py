@@ -154,5 +154,8 @@ class Tracker:
 
 
 if __name__ == "__main__":
-    tracker = Tracker()
+    ip = input("Enter the ip you want to track from (Leave blank for 'localhost'): ").strip()
+    port = int(input("Enter the port you want to listen on (Default: 9999): "))
+
+    tracker = Tracker(ip if ip else "localhost", port if port else 9999)
     tracker.run()
