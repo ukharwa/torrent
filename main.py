@@ -66,7 +66,10 @@ def main():
         return row  # Store row elements
 
     def open_file():
+
         file_path = filedialog.askopenfilename(title="Select A File", filetypes=(("All Files", "*.*"),))
+        log_text.insert(tk.END, f"Selected file: {file_path}\n")    #logging file path
+        log_text.see(tk.END)  # scroll
 
         if not file_path:
             return  # If no file is selected, do nothing
@@ -74,15 +77,17 @@ def main():
         filename= file_path.split("/")[-1]
 
         if filename.split(".")[-1] != "ppp":
-            def new_torrent(filename):
-                filetotorrent(file_path, 2048, "192.168.79.129", 9999)
-                filename = filename.split(".")[0] + ".ppp"
-                create_cache(filename)
-            logger.info("Generating torrent (.ppp) file for requested file")
-            threading.Thread(target=new_torrent, args=(filename,), daemon=True).start()
+            filename = filename.split(".")[0] + ".ppp"
 
-        log_text.insert(tk.END, f"Selected file: {file_path}\n")    #logging file path
-        log_text.see(tk.END)  # scroll
+            def new_torrent(torrent, path):
+                filetotorrent(path)
+                create_cache(torrent, path)
+
+            logger.info("Generating torrent (.ppp) file for requested file")
+            thread = threading.Thread(target=new_torrent, args=(filename, file_path,), daemon=True)
+            thread.start()
+            thread.join()
+
         global port
         process = Client(filename, logger, port)
         port += 1

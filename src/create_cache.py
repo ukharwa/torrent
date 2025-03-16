@@ -1,11 +1,11 @@
 import json
 
-def create_cache(filename):
-        with open(filename,"r") as torrent_file:
+def create_cache(torrent, path):
+        with open(torrent,"r") as torrent_file:
                 torrent_info = json.load(torrent_file)
 
         data = {
-                "file path": torrent_info["file name"],
+                "file path": path,
                 "downloaded": torrent_info["file size"],
                 "uploaded": 0,
                 "left": 0,

@@ -227,7 +227,7 @@ class Client():
                         piece = get_packets(self.cache["file path"], piece_index, self.torrent_info["piece length"])
                         conn.sendall(piece)
                         self.logger.info("Piece sent")
-                        self.cache["uploaded"] += int.from_bytes(piece[1:4], "little") - 4
+                        self.cache["uploaded"] += int.from_bytes(piece[0:4], "little") - 4
 
                     conn.close()
                 except:

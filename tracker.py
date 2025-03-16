@@ -8,7 +8,7 @@ from src.protocol import *
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 class Tracker:
-    def __init__(self, ip="0.0.0.0", port=9999):
+    def __init__(self, ip="localhost", port=9999):
 
         # Initialize tracker socket
         self.tracker = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -154,5 +154,5 @@ class Tracker:
 
 
 if __name__ == "__main__":
-    tracker = Tracker(ip="192.168.79.129")
+    tracker = Tracker()
     tracker.run()

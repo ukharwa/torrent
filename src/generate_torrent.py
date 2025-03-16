@@ -26,7 +26,7 @@ def generate_torrent_data(filename, piece_size, tracker_ip, tracker_port):
 
     torrent_data =  {
         "tracker": (tracker_ip, tracker_port),
-        "file name": filename.split("\\")[-1],
+        "file name": filename.split("/")[-1],
         "info hash": info_hash,
         "file size": file_size,
         "piece length": piece_size,
@@ -36,7 +36,7 @@ def generate_torrent_data(filename, piece_size, tracker_ip, tracker_port):
     return torrent_data
 
 
-def filetotorrent(filename, piece_size, tracker_ip, tracker_port):            #reads a file and populates another file with the torrent data
+def filetotorrent(filename, piece_size=512, tracker_ip="localhost", tracker_port=9999):            #reads a file and populates another file with the torrent data
 
     torrent_data = generate_torrent_data(filename, piece_size, tracker_ip, tracker_port)
     torrent_filename = filename.split("/")[-1].split(".")[0] + ".ppp"
