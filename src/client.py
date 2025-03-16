@@ -161,78 +161,84 @@ class Client():
 
 
     def leech(self, response):
+        try:
+            seeders = response["seeders"]
 
-        seeders = response["seeders"]
+            if not seeders:
+                self.logger.info("No seeders available")
+                return
 
-        if not seeders:
-            self.logger.info("No seeders available")
-            return
+            if not os.path.exists(self.cache["file path"]):
+                with open(self.cache["file path"], "wb") as f:
+                    f.truncate(self.torrent_info["file size"])
 
-        if not os.path.exists(self.cache["file path"]):
-            with open(self.cache["file path"], "wb") as f:
-                f.truncate(self.torrent_info["file size"])
+            threads = []
+            
+            missing_pieces = [i for i, has_piece in enumerate(self.cache["pieces"]) if has_piece == 0]
 
-        threads = []
-        
-        missing_pieces = [i for i, has_piece in enumerate(self.cache["pieces"]) if has_piece == 0]
+            # Distribute pieces among seeders (round-robin)
+            seeder_pieces = {seeder: [] for seeder in seeders}
+            seeder_count = len(seeders)
+            for i, piece_index in enumerate(missing_pieces):
+                seeder = seeders[i % seeder_count]  # Manually cycle through seeders
+                seeder_pieces[seeder].append(piece_index)
 
-        # Distribute pieces among seeders (round-robin)
-        seeder_pieces = {seeder: [] for seeder in seeders}
-        seeder_count = len(seeders)
-        for i, piece_index in enumerate(missing_pieces):
-            seeder = seeders[i % seeder_count]  # Manually cycle through seeders
-            seeder_pieces[seeder].append(piece_index)
+            # Start one thread per seeder
+            threads = []
+            for seeder, piece_list in seeder_pieces.items():
+                thread = threading.Thread(target=self.request_piece, args=(seeder, piece_list))
+                thread.start()
+                threads.append(thread)
 
-        # Start one thread per seeder
-        threads = []
-        for seeder, piece_list in seeder_pieces.items():
-            thread = threading.Thread(target=self.request_piece, args=(seeder, piece_list))
-            thread.start()
-            threads.append(thread)
+            # Wait for all threads to finish
+            for thread in threads:
+                thread.join()
 
-        # Wait for all threads to finish
-        for thread in threads:
-            thread.join()
+            # Save the downloaded file
+            self.logger.info("Download complete!")
 
-        # Save the downloaded file
-        self.update_cache()
-        self.logger.info("Download complete!")
-        self.update_tracker(self.tracker, 3)
+        finally:
+            self.update_cache()
+            self.update_tracker(self.tracker, 3)
 
 
     def seed(self):
+        try:
+            tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            tcp_server.bind((socket.gethostbyname(socket.gethostname()), self.port))
+            tcp_server.listen()
 
-        tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcp_server.bind((socket.gethostbyname(socket.gethostname()), self.port))
-        tcp_server.listen()
+            self.logger.info("Seeding " + self.torrent_info["file name"] + "...")
+            while True:
+                try:
+                    self.logger.info("Seeding: waiting for peer connection...")
+                    conn, addr = tcp_server.accept()
+                    self.logger.info(f"Peer connected from {addr}")
 
-        self.logger.info("Seeding " + self.torrent_info["file name"] + "...")
-        while True:
-            try:
-                self.logger.info("Seeding: waiting for peer connection...")
-                conn, addr = tcp_server.accept()
-                self.logger.info(f"Peer connected from {addr}")
+                    while True:
+                        piece_data = recv_all(conn, 4)
+                        # Check if seeder should stop
+                        if piece_data.hex() == "ff":
+                            self.logger.info("Seeder received termination signal.")
+                            break
+                        piece_index = int.from_bytes(piece_data, 'little')
+                        self.logger.info(f"Request for piece {piece_index}")
+                        # Corrected: subtract 4 from the length of the packet data (header excluded)
+                        piece = get_packets(self.cache["file path"], piece_index, self.torrent_info["piece length"])
+                        conn.sendall(piece)
+                        self.logger.info("Piece sent")
+                        self.cache["uploaded"] += int.from_bytes(piece[1:4], "little") - 4
 
-                while True:
-                    piece_data = recv_all(conn, 4)
-                    # Check if seeder should stop
-                    if piece_data.hex() == "ff":
-                        self.logger.info("Seeder received termination signal.")
-                        break
-                    piece_index = int.from_bytes(piece_data, 'little')
-                    self.logger.info(f"Request for piece {piece_index}")
-                    # Corrected: subtract 4 from the length of the packet data (header excluded)
-                    piece = get_packets(self.cache["file path"], piece_index, self.torrent_info["piece length"])
-                    conn.sendall(piece)
-                    self.logger.info("Piece sent")
-                    self.cache["uploaded"] += int.from_bytes(piece[1:4], "little") - 4
-
-                conn.close()
-            except:
-                self.logger.warning("Leecher unexpectedly disconnected")
-
+                    conn.close()
+                except:
+                    self.logger.warning("Leecher unexpectedly disconnected")
+                finally:
+                    self.update_cache()
+                    self.logger.info("Seeding ended and cache updated.")
+        finally:
+            self.logger.error("An error occured. Leaving swarm...")
             self.update_cache()
-            self.logger.info("Seeding complete and cache updated.")
+            self.update_tracker(self.tracker, 3)
 
 
     def run(self):
