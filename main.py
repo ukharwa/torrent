@@ -5,7 +5,6 @@ from src.client import Client
 import threading, logging
 from src.create_cache import create_cache
 from src.generate_torrent import filetotorrent
-# list of torrent rows
 
 class Row:
     def __init__(self, process, window, index):
@@ -63,7 +62,7 @@ def main():
     def add_torrent_row(process):
         row = Row(process, window, len(processes))
 
-        return row  # Store row elements
+        return row  # store row elements
 
     def open_file():
 
@@ -72,7 +71,7 @@ def main():
         log_text.see(tk.END)  # scroll
 
         if not file_path:
-            return  # If no file is selected, do nothing
+            return  # if no file selected => do nothing
 
         filename= file_path.split("/")[-1]
 
@@ -102,13 +101,13 @@ def main():
         window.after(10, update_progress)
     
     window = Tk()
-    window.geometry("800x600")
+    window.geometry("800x510")
     window.configure(bg="#FFFFFF")
 
     canvas = Canvas(
         window,
         bg="#FFFFFF",
-        height=600,
+        height=500,
         width=800,
         bd=0,
         highlightthickness=0,
@@ -117,39 +116,39 @@ def main():
     canvas.place(x=0, y=0)
 
 
-    # Header
+    #header
     canvas.create_rectangle(0.0, 0.0, 800.0, 71.0, fill="#3E355A", outline="")
     canvas.create_text(15.0, 16.0, anchor="nw", text="PP Protocol", fill="#FFFFFF", font=("Arial", 24))
 
-    # Logs label
-    canvas.create_text(4.0, 302.0, anchor="nw", text="Logs:", fill="#000000", font=("Arial", 12))
+    # logs label
+    canvas.create_text(4.0, 322.0, anchor="nw", text="Logs:", fill="#000000", font=("Arial", 12))
 
-    # Add a text box for logs
+    # add a text box for logs
     
     log_text = Text(window, wrap="word", height=8, width=95, font=("Arial", 10))
-    log_text.place(x=4, y=320, width=792, height=150)
+    log_text.place(x=4, y=345, width=792, height=150)
     
     
-    # Add a scrollbar for the logs
+    # add a scrollbar for the logs
     scrollbar = Scrollbar(window, command=log_text.yview)
-    scrollbar.place(x=780, y=320, height=150)
+    scrollbar.place(x=780, y=345, height=150)
     log_text.config(yscrollcommand=scrollbar.set)
 
-    # Button Styling
-    button_width = 131
+    # button styling
+    button_width = 780
     button_height = 46
     x_start = 10  # start position for first button
-    y_position = 240  # y position for all buttons
+    y_position = 270  # y position for all buttons
 
-    # Select Button
     select_button = Button(
         text="Select a file",
-        font=("Trebuchet MS", 12),
+        font=("Arial", 12),
         borderwidth=0,
         highlightthickness=0,
         command=open_file,
-        relief="flat"
-    )
+        relief="flat",
+        bg="#d4d4d4"  
+        )
     select_button.place(x=x_start, y=y_position, width=button_width, height=button_height)
 
     logger = logging.getLogger()  
