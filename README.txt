@@ -17,6 +17,7 @@ LEECHING:
 	Click the "Select file" button
 	Choose a .ppp file
 	If a seeder is seeding that file your download will begin, otherwise try again later.
+	The file will save in the downloads folder.
 
 NOTES:
 	When you are seeding a file not from a .ppp file, the tracker information stored in the auto-generated .ppp file is set to the default

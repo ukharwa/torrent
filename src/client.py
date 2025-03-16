@@ -1,5 +1,4 @@
 
-from _typeshed import SupportsItemAccess
 import socket, json, threading, os, base64
 from src.peer import generate_peerid
 from src.protocol import *
