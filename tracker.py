@@ -4,7 +4,7 @@ import threading
 import logging
 from src.protocol import *
 
-# Configure logging
+#configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 class Tracker:
@@ -44,7 +44,7 @@ class Tracker:
                 logging.error(f"Error in await_message: {e}")
 
 
-    def handle_connection_request(self, addr): # Processes connection requests
+    def handle_connection_request(self, addr): # processes connection requests
         logging.info(f"Connection request from {addr[0]} received...")
         connectionID = get_connectionID(addr[0])
         with self.lock:
@@ -52,7 +52,7 @@ class Tracker:
         self.tracker.sendto(self.protocol.connection_response(connectionID), addr)
 
 
-    def handle_announcement(self, data, addr): # Processes announcements
+    def handle_announcement(self, data, addr): # processes announcements
         logging.info(f"Announcement received from {addr[0]}")
         response = self.protocol.tracker_decode(data)
         connectionID = response["connectionID"]

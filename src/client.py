@@ -6,7 +6,7 @@ from src.protocol import *
 class Client():
 
     def __init__(self, filename, logger, port=9001, sk="hello"):
-
+        #intialise client with torrent info,logger,port. secret key
         self.torrent_info = self.read_torrent_file(filename)
         self.check_cache()
         self.udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -19,14 +19,14 @@ class Client():
 
 
     def read_torrent_file(self, filename):
-
+        #read torrent file
         with open(filename,"r") as torrent_file:
             data = json.load(torrent_file)
         return data
 
      
     def check_cache(self):
-
+        #check if cahce file exists else create default cache
         try:
             with open("cache/." + self.torrent_info["info hash"], "r") as file:
                 data = json.load(file)
@@ -48,7 +48,7 @@ class Client():
 
 
     def update_cache(self):
-
+        #update cache file with current data
         self.logger.info("Updating cache file")
         self.status = 0 if self.cache["left"] == 0 else 1
         with open("cache/."+self.torrent_info["info hash"], "w") as file:
@@ -56,7 +56,7 @@ class Client():
 
 
     def join_swarm(self, tracker):
-
+        #peer join swarm
         self.logger.info("Joining swarm...")
         attempts = 0
         while attempts < 5:
@@ -80,7 +80,10 @@ class Client():
                 return None
 
 
-    def update_tracker(self, tracker, event):
+    def update_tracker(self, tracker, event):   
+        #repeatedly sends client's status to the tracker,
+        #updates the interval from tracker response, and 
+        # reattempts joining swarm if an error occurs
 
         while True:
             self.logger.info("Updating tracker...")
@@ -101,7 +104,7 @@ class Client():
 
 
     def connect_to_tracker(self, tracker):
-
+        #connect to tracker and get connection id
         self.logger.info("Searching for tracker...")
         self.udp_client.sendto(self.protocol.connection_request(), tracker)
         data, _ = self.udp_client.recvfrom(12)
@@ -114,7 +117,7 @@ class Client():
 
 
     def request_piece(self, seeder, piece_list):
-
+            #request for pieces from seeder using tcp
             try:
                 counter = 0
                 index = 0
@@ -123,7 +126,7 @@ class Client():
                 while len(piece_list) > 0:
                     if counter == 3:
                         counter = 0
-                        index += 1
+                        index += 1  
                     piece_index = piece_list[index]
                     self.logger.info(f"Connected to {seeder} for piece {piece_index}")
 
@@ -161,6 +164,7 @@ class Client():
 
 
     def leech(self, response):
+        #download pieces from seeders
         try:
             seeders = response["seeders"]
 
@@ -183,18 +187,18 @@ class Client():
                 seeder = seeders[i % seeder_count]  # Manually cycle through seeders
                 seeder_pieces[seeder].append(piece_index)
 
-            # Start one thread per seeder
+            # start one thread per seeder
             threads = []
             for seeder, piece_list in seeder_pieces.items():
                 thread = threading.Thread(target=self.request_piece, args=(seeder, piece_list))
                 thread.start()
                 threads.append(thread)
 
-            # Wait for all threads to finish
+            #wait for all threads to finish
             for thread in threads:
                 thread.join()
 
-            # Save the downloaded file
+            #save the downloaded file
             self.logger.info("Download complete!")
 
         finally:
@@ -203,6 +207,7 @@ class Client():
 
 
     def seed(self):
+        #server pieces to requesting peers
         try:
             tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             tcp_server.bind((socket.gethostbyname(socket.gethostname()), self.port))
@@ -273,6 +278,7 @@ class Client():
 
 
     def save_cache(self):
+        #periodically cache file progress
         time.sleep(5)
         self.update_cache()
 

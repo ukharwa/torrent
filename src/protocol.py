@@ -8,22 +8,22 @@ class Protocol:
     def __init__(self):
         self.data = bytearray()
 
-    def connection_request(self) -> bytearray: # Create a connection request message.
+    def connection_request(self) -> bytearray: # create connection request message
         data = bytearray(4)
         action = 0  # Connect action
         data[0:4] = action.to_bytes(4, 'little')
         return data
 
-    def connection_response(self, connectionID: bytearray) -> bytearray: # Create a connection response message including the connection ID.
+    def connection_response(self, connectionID: bytearray) -> bytearray: # create connection response message with connection ID
         data = bytearray(12)
         action = 0  # Connect action
         data[0:4] = action.to_bytes(4, 'little')
         data[4:12] = connectionID
         return data
 
-    def announce_request(self, connectionID, file_hash, peerID, downloaded, uploaded, left, event, ip, port): # Create an announcement request containing peer and file information.
+    def announce_request(self, connectionID, file_hash, peerID, downloaded, uploaded, left, event, ip, port): #create announcement request with peer and file information
         data = bytearray(110)
-        action = 1  # Announce action
+        action = 1              # announce action
         data[0:4] = action.to_bytes(4, 'little')
         data[4:12] = connectionID
         data[12:44] = file_hash.encode()             # file hash
@@ -36,7 +36,7 @@ class Protocol:
         data[108:110] = port.to_bytes(2, 'little')       # connection port
         return data
 
-    def announce_response(self, interval, num_leechers, seeders): # Create an announcement response to be sent to a leecher.
+    def announce_response(self, interval, num_leechers, seeders): # create announcement response to be sent to leecher
         num_seeders = len(seeders)
         data = bytearray(20 + 6 * num_seeders)
         action = 1
@@ -50,7 +50,7 @@ class Protocol:
 
         return data
 
-    def send_error(self, message): # Create an error message.
+    def send_error(self, message): # create error message.
         data = bytearray(259)
         action = 99
         data[0:4] = action.to_bytes(4, 'little')
@@ -58,7 +58,7 @@ class Protocol:
         data[8:] = message.encode()
         return data
 
-    def client_decode(self, request): # Decode a client request.
+    def client_decode(self, request): # decode client request.
         response = {}
         action = int.from_bytes(request[0:4], 'little')
 
@@ -86,7 +86,7 @@ class Protocol:
 
         return response
 
-    def tracker_decode(self, request): # Decode a tracker request.
+    def tracker_decode(self, request): #decode tracker request
         response = {}
         action = int.from_bytes(request[0:4], 'little')
 
@@ -105,17 +105,17 @@ class Protocol:
         return response
 
 
-def ip_to_bytes(ip): # Convert a dotted IP string to a 4-byte array.
+def ip_to_bytes(ip): # convert dotted ip string to 4 byte array
     ip_list = ip.split(".")
     data = bytearray(int(octet) for octet in ip_list)
     return data
 
 
-def ip_from_bytes(data): # Convert a 4-byte array to a dotted IP string.
+def ip_from_bytes(data): # convert a 4 byte array to dotted ip string
     return ".".join(str(b) for b in data[0:4])
 
 
-def get_connectionID(ip): # Create a connection ID using the IP and current timestamp.
+def get_connectionID(ip): # create a connection id using ip and current time
     connectionID = bytearray(8)
     connectionID[0:4] = ip_to_bytes(ip)
     timestamp = int(time.time())
@@ -123,13 +123,13 @@ def get_connectionID(ip): # Create a connection ID using the IP and current time
     return connectionID
 
 
-def decode_connectionID(conID): # Decode the connection ID to retrieve the originating IP and timestamp.
+def decode_connectionID(conID): # decode connection id to get the originating ip and timestamp
     ip_str = ip_from_bytes(conID[0:4])
     timestamp = int.from_bytes(conID[4:], 'little')
     return f"{ip_str}{timestamp}"
 
 
-def peer_from_announce(response): # Create a Peer object from an announcement response.
+def peer_from_announce(response): # create a peer object from a announcement response
     return Peer(
         response["ip"],
         response["port"],
@@ -141,7 +141,7 @@ def peer_from_announce(response): # Create a Peer object from an announcement re
     )
 
 
-def peer_to_bytes(peer): # Convert a Peer (or an IP/port tuple) to a 6-byte representation.
+def peer_to_bytes(peer): #convert a peer (or ip-port tuple) to 6 byte form 
     if isinstance(peer, Peer):
         ip = peer.ip
         port = peer.port
@@ -153,14 +153,14 @@ def peer_to_bytes(peer): # Convert a Peer (or an IP/port tuple) to a 6-byte repr
     return data
 
 
-def peer_from_bytes(data): # Convert a 6-byte array into an IP string and port tuple.
+def peer_from_bytes(data): # convert 6-byte array into ip string and port tuple
     ip = ip_from_bytes(data[0:4])
     port = int.from_bytes(data[4:6], 'little')
     return ip, port
 
 
 def get_packets(filename, index,  packet_size):
-    # Read a file and break it into packets of a given size.
+    #read file and break it into packets of a given size
     offset = index * packet_size
     with open(filename, "r+b") as file:
         file.seek(offset)
@@ -172,12 +172,12 @@ def get_packets(filename, index,  packet_size):
     return data
 
 
-def recv_all(sock, size): # Receive exactly 'size' bytes from the socket.
+def recv_all(sock, size): # receive 'size' bytes from socket
     data = b""
     while len(data) < size:
         packet = sock.recv(size - len(data))
         if not packet:
-            break  # Connection closed
+            break  # connection closed
         data += packet
     return data
 
