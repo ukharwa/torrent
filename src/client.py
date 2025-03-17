@@ -253,28 +253,27 @@ class Client():
 
         response = self.join_swarm(self.tracker)
 
-        threads = []
 
         if response:
             self.update_interval = response["interval"]
 
             update_thread = threading.Thread(target=lambda: self.update_tracker(self.tracker, 0))
             save_thread = threading.Thread(target=self.save_cache)
-            threads.append(update_thread)
-            threads.append(save_thread)
+            update_thread.start()
+            save_thread.start()
 
             if self.status == 0:
                 seed_thread = threading.Thread(target=self.seed)
-                threads.append(seed_thread)
+                seed_thread.start()
             else:
                 leech_thread = threading.Thread(target= lambda: self.leech(response))
-                threads.append(leech_thread)
+                leech_thread.start()
+                leech_thread.join()
+                threading.Thread(target=self.seed).start()
         else:
             self.logger.info("Could not establish connection to tracker")
             return
 
-        for thread in threads:
-            thread.start()
 
 
     def save_cache(self):
