@@ -1,3 +1,9 @@
+A simple peer-to-peer file sharing system.
+Implements a simple UDP tracker to facilitate connections.
+Allows for concurrent seeding and leeching and leeching from multiple seeders for the same file.
+Implements SHA-256 integrity checks.
+
+<br></br>
 
 1. Download all the files
 2. Run the tracker (see TRACKER section below)
