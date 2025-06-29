@@ -1,24 +1,26 @@
+#Peer-to-Peer Protocol
+
 A simple peer-to-peer file sharing system.
 Implements a simple UDP tracker to facilitate connections.
 Allows for concurrent seeding and leeching and leeching from multiple seeders for the same file.
 Implements SHA-256 integrity checks.
 
-<br></br>
-
+---
+##Instructions
 1. Download all the files
 2. Run the tracker (see TRACKER section below)
 3. Seed the file (see SEEDING section below)
 4. Leech the file (see LEECHING section below)
 
-TRACKER:
+###TRACKER:
 1. Run the file 'tracker.py'. This will ask you for an ip and a port to listen on. Defaults = ("localhost", 9999)
 
-SEEDING:
+###SEEDING:
 	Run the file main.py. This will open up a gui with a select file button.
 	Select a file you want to seed. This will generate a .ppp torrent file for the file you are seeding and begin seeding.
 	If you already have a .ppp file and you have completed the download you can select the .ppp file and seed from there
 
-LEECHING:
+###LEECHING:
 	Run main.py
 	Click the "Select file" button
 	Choose a .ppp file
